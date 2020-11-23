@@ -28,4 +28,7 @@ public interface Filterer {
 
   public static TemplateClassDefinition<Filterer> TEMPLATE_DEFINITION2 = new TemplateClassDefinition<Filterer>(Filterer.class, FilterTemplate2.class);
 
+  /* Alternative template which offloads evaluation of the filter to C++ code */
+  public static TemplateClassDefinition<Filterer> TEMPLATE_ACCELERATED = new TemplateClassDefinition<Filterer>(Filterer.class, FilterTemplateAccelerated.class);
+
 }

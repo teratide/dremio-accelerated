@@ -238,7 +238,8 @@ class SplitStageExecutor implements AutoCloseable {
       finalSplit = gandivaSplits.get(0);
     }
 
-    if (finalSplit.getExecutionEngine() == SupportedEngines.Engine.GANDIVA) {
+    /* TODO: This is rather hacky, eventually the accelerated filter can be extracted to a separate method without a Gandiva implementation */
+    if (finalSplit.getExecutionEngine() == SupportedEngines.Engine.GANDIVA && false) {
       logger.trace("Setting up filter for split in Gandiva {}", finalSplit.toString());
       gandivaCodeGenWatch.start();
       nativeFilter = NativeFilter.build(finalSplit.getNamedExpression().getExpr(), incoming, outgoing.getSelectionVector2(),
@@ -250,7 +251,7 @@ class SplitStageExecutor implements AutoCloseable {
 
     logger.trace("Setting up filter for split in Java {}", finalSplit.toString());
     javaCodeGenWatch.start();
-    final ClassGenerator<Filterer> filterClassGen = context.getClassProducer().createGenerator(Filterer.TEMPLATE_DEFINITION2).getRoot();
+    final ClassGenerator<Filterer> filterClassGen = context.getClassProducer().createGenerator(Filterer.TEMPLATE_ACCELERATED).getRoot();
     filterClassGen.addExpr(new ReturnValueExpression(finalSplit.getNamedExpression().getExpr()), ClassGenerator.BlockCreateMode.MERGE, true);
     final Filterer javaFilter = filterClassGen.getCodeGenerator().getImplementationClass();
     javaFilter.setup(context.getClassProducer().getFunctionContext(), incoming, outgoing);
