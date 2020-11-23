@@ -55,6 +55,26 @@ public class TestSimpleFilter extends BaseTestOperator {
   }
 
   @Test
+  public void alwaysTrueFilter() throws Exception {
+    Filter f = new Filter(PROPS, null, toExpr("c0 < 10"), 1f);
+    Table input = t(
+      th("c0"),
+      tr(35),
+      tr(8),
+      tr(22)
+    );
+
+    Table output = t(
+      th("c0"),
+      tr(35),
+      tr(8),
+      tr(22)
+    );
+
+    validateSingle(f, FilterOperator.class, input, output);
+  }
+
+  @Test
   public void simpleFilter2() throws Exception {
 
     Filter f = new Filter(PROPS, null, toExpr("c0 < c1"), 1f);
