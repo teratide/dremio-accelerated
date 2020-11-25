@@ -25,7 +25,7 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rex.RexNode;
 
 import com.dremio.exec.physical.base.PhysicalOperator;
-import com.dremio.exec.physical.config.Filter;
+import com.dremio.exec.physical.config.AcceleratedFilter;
 import com.dremio.exec.planner.common.FilterRelBase;
 import com.dremio.exec.planner.logical.ParseContext;
 import com.dremio.exec.planner.physical.visitor.PrelVisitor;
@@ -56,7 +56,7 @@ public class AcceleratedFilterPrel extends FilterRelBase implements Prel {
 
     PhysicalOperator childPOP = child.getPhysicalOperator(creator);
 
-    return new Filter(
+    return new AcceleratedFilter(
       creator.props(this, null, childPOP.getProps().getSchema().clone(SelectionVectorMode.TWO_BYTE), RESERVE, LIMIT),
       childPOP,
       getFilterExpression(new ParseContext(PrelUtil.getSettings(getCluster()))),
