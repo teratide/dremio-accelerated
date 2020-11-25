@@ -22,13 +22,13 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.logical.LogicalFilter;
 
 /**
- * Rule that converts a {@link org.apache.calcite.rel.logical.LogicalFilter} to a Dremio "filter" operation.
+ * Rule that converts a {@link org.apache.calcite.rel.logical.LogicalFilter} to an AcceleratedFilter operation.
  */
-public class FilterRule extends RelOptRule {
-  public static final RelOptRule INSTANCE = new FilterRule();
+public class AcceleratedFilterRule extends RelOptRule {
+  public static final RelOptRule INSTANCE = new AcceleratedFilterRule();
 
-  private FilterRule() {
-    super(RelOptHelper.any(LogicalFilter.class, Convention.NONE), "FilterRule");
+  private AcceleratedFilterRule() {
+    super(RelOptHelper.any(LogicalFilter.class, Convention.NONE), "AcceleratedFilterRule");
   }
 
   @Override
@@ -37,6 +37,6 @@ public class FilterRule extends RelOptRule {
     final RelNode input = filter.getInput();
     //final RelTraitSet traits = filter.getTraitSet().plus(Rel.LOGICAL);
     final RelNode convertedInput = convert(input, input.getTraitSet().plus(Rel.LOGICAL).simplify());
-    call.transformTo(new FilterRel(filter.getCluster(), convertedInput.getTraitSet(), convertedInput, filter.getCondition()));
+    call.transformTo(new AcceleratedFilterRel(filter.getCluster(), convertedInput.getTraitSet(), convertedInput, filter.getCondition()));
   }
 }

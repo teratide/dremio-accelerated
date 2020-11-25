@@ -71,6 +71,7 @@ import org.slf4j.LoggerFactory;
 import com.dremio.exec.expr.fn.hll.ConvertCountDistinctToHll;
 import com.dremio.exec.expr.fn.hll.RewriteNdvAsHll;
 import com.dremio.exec.ops.OptimizerRulesContext;
+import com.dremio.exec.planner.logical.AcceleratedFilterRule;
 import com.dremio.exec.planner.logical.AggregateRel;
 import com.dremio.exec.planner.logical.AggregateRule;
 import com.dremio.exec.planner.logical.CompositeFilterJoinRule;
@@ -84,7 +85,6 @@ import com.dremio.exec.planner.logical.FilterFlattenTransposeRule;
 import com.dremio.exec.planner.logical.FilterJoinRulesUtil;
 import com.dremio.exec.planner.logical.FilterMergeCrule;
 import com.dremio.exec.planner.logical.FilterRel;
-import com.dremio.exec.planner.logical.FilterRule;
 import com.dremio.exec.planner.logical.FlattenRule;
 import com.dremio.exec.planner.logical.JoinFilterCanonicalizationRule;
 import com.dremio.exec.planner.logical.JoinNormalizationRule;
@@ -108,10 +108,10 @@ import com.dremio.exec.planner.logical.SortRule;
 import com.dremio.exec.planner.logical.UnionAllRule;
 import com.dremio.exec.planner.logical.ValuesRule;
 import com.dremio.exec.planner.logical.WindowRule;
+import com.dremio.exec.planner.physical.AcceleratedFilterPrule;
 import com.dremio.exec.planner.physical.EmptyPrule;
 import com.dremio.exec.planner.physical.FilterNLJMergeRule;
 import com.dremio.exec.planner.physical.FilterProjectNLJRule;
-import com.dremio.exec.planner.physical.FilterPrule;
 import com.dremio.exec.planner.physical.FlattenPrule;
 import com.dremio.exec.planner.physical.HashAggPrule;
 import com.dremio.exec.planner.physical.HashJoinPrule;
@@ -676,7 +676,7 @@ public enum PlannerPhase {
        * Crel => Drel
        */
       ProjectRule.INSTANCE,
-      FilterRule.INSTANCE,
+      AcceleratedFilterRule.INSTANCE,
       WindowRule.INSTANCE,
       AggregateRule.INSTANCE,
       LimitRule.INSTANCE,
@@ -700,7 +700,8 @@ public enum PlannerPhase {
     ruleList.add(FlattenPrule.INSTANCE);
     ruleList.add(ScreenPrule.INSTANCE);
     ruleList.add(ExpandConversionRule.INSTANCE);
-    ruleList.add(FilterPrule.INSTANCE);
+    //ruleList.add(FilterPrule.INSTANCE);
+    ruleList.add(AcceleratedFilterPrule.INSTANCE);
     ruleList.add(LimitPrule.INSTANCE);
     ruleList.add(SamplePrule.INSTANCE);
     ruleList.add(SampleToLimitPrule.INSTANCE);
