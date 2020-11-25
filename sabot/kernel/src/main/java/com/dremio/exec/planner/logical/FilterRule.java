@@ -37,6 +37,6 @@ public class FilterRule extends RelOptRule {
     final RelNode input = filter.getInput();
     //final RelTraitSet traits = filter.getTraitSet().plus(Rel.LOGICAL);
     final RelNode convertedInput = convert(input, input.getTraitSet().plus(Rel.LOGICAL).simplify());
-    call.transformTo(new FilterRel(filter.getCluster(), convertedInput.getTraitSet(), convertedInput, filter.getCondition()));
+    call.transformTo(new AcceleratedFilterRel(filter.getCluster(), convertedInput.getTraitSet(), convertedInput, filter.getCondition()));
   }
 }
