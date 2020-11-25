@@ -16,6 +16,7 @@
 package com.dremio.exec.physical.base;
 
 import com.dremio.exec.physical.config.AbstractSort;
+import com.dremio.exec.physical.config.AcceleratedFilter;
 import com.dremio.exec.physical.config.BroadcastSender;
 import com.dremio.exec.physical.config.DictionaryLookupPOP;
 import com.dremio.exec.physical.config.EmptyValues;
@@ -58,6 +59,7 @@ public interface PhysicalVisitor<RETURN, EXTRA, EXCEP extends Throwable> {
   public RETURN visitStore(Store store, EXTRA value) throws EXCEP;
 
   public RETURN visitFilter(Filter filter, EXTRA value) throws EXCEP;
+  public RETURN visitAcceleratedFilter(AcceleratedFilter filter, EXTRA value) throws EXCEP;
   public RETURN visitUnion(UnionAll union, EXTRA value) throws EXCEP;
   public RETURN visitProject(Project project, EXTRA value) throws EXCEP;
   public RETURN visitDictionaryLookup(DictionaryLookupPOP dictionaryLookupPOP, EXTRA value) throws EXCEP;

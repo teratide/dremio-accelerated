@@ -238,7 +238,6 @@ class SplitStageExecutor implements AutoCloseable {
       finalSplit = gandivaSplits.get(0);
     }
 
-    /* TODO: This is rather hacky, eventually the accelerated filter can be extracted to a separate method without a Gandiva implementation */
     if (finalSplit.getExecutionEngine() == SupportedEngines.Engine.GANDIVA && false) {
       logger.trace("Setting up filter for split in Gandiva {}", finalSplit.toString());
       gandivaCodeGenWatch.start();
@@ -247,6 +246,40 @@ class SplitStageExecutor implements AutoCloseable {
       gandivaCodeGenWatch.stop();
       this.filterFunction = new NativeTimedFilter(nativeFilter);
       return;
+    }
+
+    logger.trace("Setting up filter for split in Java {}", finalSplit.toString());
+    javaCodeGenWatch.start();
+    final ClassGenerator<Filterer> filterClassGen = context.getClassProducer().createGenerator(Filterer.TEMPLATE_DEFINITION2).getRoot();
+    filterClassGen.addExpr(new ReturnValueExpression(finalSplit.getNamedExpression().getExpr()), ClassGenerator.BlockCreateMode.MERGE, true);
+    final Filterer javaFilter = filterClassGen.getCodeGenerator().getImplementationClass();
+    javaFilter.setup(context.getClassProducer().getFunctionContext(), incoming, outgoing);
+    javaCodeGenWatch.stop();
+    this.filterFunction = new JavaTimedFilter(javaFilter);
+  }
+
+  // setup evaluation of accelerated filter for all splits
+  void setupAcceleratedFilter(VectorContainer outgoing, Stopwatch javaCodeGenWatch, Stopwatch gandivaCodeGenWatch) throws GandivaException,Exception {
+    if (!hasOriginalExpression) {
+      setupProjector(null, javaCodeGenWatch, gandivaCodeGenWatch);
+      return;
+    }
+
+    // create the no-op projectors
+    setupFinish(outgoing, javaCodeGenWatch, gandivaCodeGenWatch);
+
+    // This SplitStageExecutor has the final split
+    // For a filter, we support only one expression
+    // There can be only one split in this SplitStageExecutor
+    ExpressionSplit finalSplit = null;
+    if ((javaSplits.size() + gandivaSplits.size()) != 1) {
+      throw new Exception("There should be one ExpressionSplit for a Filter operation");
+    }
+
+    if (javaSplits.size() == 1) {
+      finalSplit = javaSplits.get(0);
+    } else {
+      finalSplit = gandivaSplits.get(0);
     }
 
     logger.trace("Setting up filter for split in Java {}", finalSplit.toString());
