@@ -238,7 +238,7 @@ class SplitStageExecutor implements AutoCloseable {
       finalSplit = gandivaSplits.get(0);
     }
 
-    if (finalSplit.getExecutionEngine() == SupportedEngines.Engine.GANDIVA && false) {
+    if (finalSplit.getExecutionEngine() == SupportedEngines.Engine.GANDIVA) {
       logger.trace("Setting up filter for split in Gandiva {}", finalSplit.toString());
       gandivaCodeGenWatch.start();
       nativeFilter = NativeFilter.build(finalSplit.getNamedExpression().getExpr(), incoming, outgoing.getSelectionVector2(),
