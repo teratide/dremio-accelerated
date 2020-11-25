@@ -763,6 +763,8 @@ limitations under the License.
             <exclude>**/*.fbs</exclude>
             <exclude>**/*.idx</exclude>
             <exclude>**/*.tpl</exclude>
+            <exclude>**/*.cpp</exclude>
+            <exclude>**/*.h</exclude>
 
             <!-- by file name -->
             <exclude>**/Jenkinsfile</exclude>
