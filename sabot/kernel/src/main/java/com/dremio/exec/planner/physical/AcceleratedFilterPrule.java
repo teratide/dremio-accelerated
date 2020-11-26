@@ -23,6 +23,9 @@ import org.apache.calcite.rel.RelNode;
 import com.dremio.exec.planner.logical.AcceleratedFilterRel;
 import com.dremio.exec.planner.logical.RelOptHelper;
 
+/**
+ * Rule that converts an AcceleratedFilterRel to an AcceleratedFilterPrel.
+ */
 public class AcceleratedFilterPrule extends Prule {
   public static final RelOptRule INSTANCE = new AcceleratedFilterPrule();
 

@@ -85,6 +85,7 @@ import com.dremio.exec.planner.logical.FilterFlattenTransposeRule;
 import com.dremio.exec.planner.logical.FilterJoinRulesUtil;
 import com.dremio.exec.planner.logical.FilterMergeCrule;
 import com.dremio.exec.planner.logical.FilterRel;
+import com.dremio.exec.planner.logical.FilterRule;
 import com.dremio.exec.planner.logical.FlattenRule;
 import com.dremio.exec.planner.logical.JoinFilterCanonicalizationRule;
 import com.dremio.exec.planner.logical.JoinNormalizationRule;
@@ -112,6 +113,7 @@ import com.dremio.exec.planner.physical.AcceleratedFilterPrule;
 import com.dremio.exec.planner.physical.EmptyPrule;
 import com.dremio.exec.planner.physical.FilterNLJMergeRule;
 import com.dremio.exec.planner.physical.FilterProjectNLJRule;
+import com.dremio.exec.planner.physical.FilterPrule;
 import com.dremio.exec.planner.physical.FlattenPrule;
 import com.dremio.exec.planner.physical.HashAggPrule;
 import com.dremio.exec.planner.physical.HashJoinPrule;
@@ -328,6 +330,14 @@ public enum PlannerPhase {
 
       moreRules.add(ExternalQueryScanRule.INSTANCE);
 
+      // TODO: Make this a setting in optimizer rules context
+      boolean enableAccelerated = true;
+      if (enableAccelerated) {
+        moreRules.add(AcceleratedFilterRule.INSTANCE);
+      } else {
+        moreRules.add(FilterRule.INSTANCE);
+      }
+
       return PlannerPhase.mergedRuleSets(LOGICAL_RULE_SET, RuleSets.ofList(moreRules));
     }
 
@@ -360,7 +370,12 @@ public enum PlannerPhase {
   PHYSICAL("Physical Planning") {
     @Override
     public RuleSet getRules(OptimizerRulesContext context) {
-      return PlannerPhase.getPhysicalRules(context);
+
+      List<RelOptRule> moreRules = new ArrayList<>();
+      moreRules.add(AcceleratedFilterPrule.INSTANCE);
+
+      final RuleSet physicalRules = PlannerPhase.getPhysicalRules(context);
+      return PlannerPhase.mergedRuleSets(physicalRules, RuleSets.ofList(moreRules));
     }
   },
 
@@ -676,7 +691,8 @@ public enum PlannerPhase {
        * Crel => Drel
        */
       ProjectRule.INSTANCE,
-      AcceleratedFilterRule.INSTANCE,
+      // This is moved to the moreRules list
+      // FilterRule.INSTANCE,
       WindowRule.INSTANCE,
       AggregateRule.INSTANCE,
       LimitRule.INSTANCE,
@@ -700,8 +716,7 @@ public enum PlannerPhase {
     ruleList.add(FlattenPrule.INSTANCE);
     ruleList.add(ScreenPrule.INSTANCE);
     ruleList.add(ExpandConversionRule.INSTANCE);
-    //ruleList.add(FilterPrule.INSTANCE);
-    ruleList.add(AcceleratedFilterPrule.INSTANCE);
+    ruleList.add(FilterPrule.INSTANCE);
     ruleList.add(LimitPrule.INSTANCE);
     ruleList.add(SamplePrule.INSTANCE);
     ruleList.add(SampleToLimitPrule.INSTANCE);
