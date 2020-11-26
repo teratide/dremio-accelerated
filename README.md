@@ -1,12 +1,8 @@
-# Dremio
+# Dremio Accelerated
 
-Dremio enables organizations to unlock the value of their data.
+Integrates Fletcher into Dremio.
 
-## Documentation
-
-Documentation is available at https://docs.dremio.com.
-
-## Quickstart: How to build and run Dremio
+## Quickstart: How to build and run Dremio Accelerated
 
 ### (a) Prerequisites
 
@@ -19,17 +15,23 @@ Run the following commands to verify that you have the correct versions of Maven
     mvn --version
 
 ### (b) Clone the Repository
+For now all work is done in the `c_filter` branch, this will be merged to master at a later stage.
 
-    git clone https://github.com/dremio/dremio-oss.git dremio
+    git clone -b c_filter https://github.com/teratide/dremio-accelerated
 
-### (c) Build the Code
+### (c) Build the Java Code
 
     cd dremio
     mvn clean install -DskipTests (or ./mvnw clean install -DskipTests if maven is not installed on the machine)
 
 The "-DskipTests" option skips most of the tests. Running all tests takes a long time.
 
-### (d) Run/Install
+### (d) Build Native Code
+Compile the native code to your `java.library.path`. Example on linux:
+
+    g++ -fPIC -I"$JAVA_HOME/include" -I"$JAVA_HOME/include/linux" -shared -o /usr/lib64/libNativeFilter.so NativeFilter.cpp
+
+### (e) Run/Install
 
 #### Run
 
@@ -54,19 +56,4 @@ Once run, the UI is accessible at:
 
     cd /opt/dremio
     bin/dremio
-
-#### OSS Only
-
-To have the best possible experience with Dremio, we include a number of dependencies when building Dremio that are distributed under non-oss free (as in beer) licenses. 
-Examples include drivers for major databases such as Oracle Database, Microsoft SQL Server, MySQL as well as enhancements to improve source pushdowns and thread 
-scheduling. If you'd like to only include dependencies with OSS licenses, Dremio will continue to work but some features will be unavailable (such as 
-connecting to databases that rely on these drivers). 
-
-To build dremio with only OSS dependencies, you can add the following option to your Maven commandline: `-Ddremio.oss-only=true`
-
-The distribution directory will be `distribution/server/target/dremio-oss-{DREMIO_VERSION}/dremio-oss-{DREMIO_VERSION}`
-
-## Questions?
-
-If you have questions, please post them on https://community.dremio.com.
 
