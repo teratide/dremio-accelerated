@@ -331,7 +331,7 @@ public enum PlannerPhase {
       moreRules.add(ExternalQueryScanRule.INSTANCE);
 
       // TODO: Make this a setting in optimizer rules context
-      boolean enableAccelerated = true;
+      boolean enableAccelerated = false;
       if (enableAccelerated) {
         moreRules.add(AcceleratedFilterRule.INSTANCE);
       } else {
