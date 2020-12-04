@@ -22,7 +22,7 @@ import com.dremio.BaseTestQuery;
 public class TestAcceleratedQuery extends BaseTestQuery {
   @Test
   public void testCorrelatedQuery() throws Exception {
-    String query = "SELECT Trip_Seconds FROM cp.\"Taxi_Trips_300.parquet\" WHERE Company LIKE 'Blue Ribbon Taxi Association Inc.'";
+    String query = "SELECT SUM(Trip_Seconds) FROM cp.\"Taxi_Trips_300.parquet\" WHERE Company LIKE 'Blue Ribbon Taxi Association Inc.'";
     test(query);
   }
 }
