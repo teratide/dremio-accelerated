@@ -618,9 +618,9 @@ public class PrelTransformer {
       final Stopwatch watch = Stopwatch.createStarted();
       final RelNode prel1 = transform(config, PlannerType.VOLCANO, PlannerPhase.PHYSICAL, drel, traits, true);
 
-      final RelNode prel2 = transform(config, PlannerType.HEP_AC, PlannerPhase.PHYSICAL_HEP, prel1, prel1.getTraitSet(), true);
+      final RelNode prel2 = transform(config, PlannerType.HEP_AC, PlannerPhase.FPGA, prel1, prel1.getTraitSet(), true);
 
-      final RelNode prel3 = transform(config, PlannerType.VOLCANO, PlannerPhase.FPGA, prel2, prel2.getTraitSet(), true);
+      final RelNode prel3 = transform(config, PlannerType.HEP_AC, PlannerPhase.PHYSICAL_HEP, prel2, prel2.getTraitSet(), true);
       phyRelNode = (Prel) prel3.accept(new PrelFinalizer());
       // log externally as we need to finalize before traversing the tree.
       log(PlannerType.VOLCANO, PlannerPhase.PHYSICAL, phyRelNode, logger, watch);
