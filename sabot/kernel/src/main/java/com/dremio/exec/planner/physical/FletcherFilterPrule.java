@@ -17,39 +17,24 @@ package com.dremio.exec.planner.physical;
 
 import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
-import org.apache.calcite.rel.RelNode;
 
 import com.dremio.exec.planner.logical.RelOptHelper;
 
 /**
  * Rule that converts a FilterPrel to a FletcherFilterPrel.
  */
-public class FletcherFilterPrule extends Prule {
+public class FletcherFilterPrule extends RelOptRule {
   public static final RelOptRule INSTANCE = new FletcherFilterPrule();
 
   private FletcherFilterPrule() {
-    super(RelOptHelper.some(FilterPrel.class, RelOptHelper.any(RelNode.class)), "FletcherFilterPrule");
+    super(RelOptHelper.any(FilterPrel.class), "FletcherFilterPrule");
   }
 
   @Override
   public void onMatch(RelOptRuleCall call) {
     final FilterPrel  filter = (FilterPrel) call.rel(0);
-    final RelNode input = filter.getInput();
 
-    call.transformTo(new FletcherFilterPrel(filter.getCluster(), input.getTraitSet(), input, filter.getCondition()));
+    call.transformTo(new FletcherFilterPrel(filter.getCluster(), filter.getInput().getTraitSet(), filter.getInput(), filter.getCondition()));
   }
 
-
-  private class Subset extends SubsetTransformer<FilterPrel, RuntimeException> {
-
-    public Subset(RelOptRuleCall call) {
-      super(call);
-    }
-
-    @Override
-    public RelNode convertChild(FilterPrel filter, RelNode rel) {
-      return new FletcherFilterPrel(filter.getCluster(), rel.getTraitSet(), rel, filter.getCondition());
-    }
-
-  }
 }
