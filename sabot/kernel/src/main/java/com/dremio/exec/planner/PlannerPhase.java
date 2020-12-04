@@ -71,7 +71,6 @@ import org.slf4j.LoggerFactory;
 import com.dremio.exec.expr.fn.hll.ConvertCountDistinctToHll;
 import com.dremio.exec.expr.fn.hll.RewriteNdvAsHll;
 import com.dremio.exec.ops.OptimizerRulesContext;
-import com.dremio.exec.planner.logical.AcceleratedFilterRule;
 import com.dremio.exec.planner.logical.AggregateRel;
 import com.dremio.exec.planner.logical.AggregateRule;
 import com.dremio.exec.planner.logical.CompositeFilterJoinRule;
@@ -109,7 +108,6 @@ import com.dremio.exec.planner.logical.SortRule;
 import com.dremio.exec.planner.logical.UnionAllRule;
 import com.dremio.exec.planner.logical.ValuesRule;
 import com.dremio.exec.planner.logical.WindowRule;
-import com.dremio.exec.planner.physical.AcceleratedFilterPrule;
 import com.dremio.exec.planner.physical.EmptyPrule;
 import com.dremio.exec.planner.physical.FilterNLJMergeRule;
 import com.dremio.exec.planner.physical.FilterProjectNLJRule;
@@ -331,14 +329,6 @@ public enum PlannerPhase {
 
       moreRules.add(ExternalQueryScanRule.INSTANCE);
 
-      // TODO: Make this a setting in optimizer rules context
-      boolean enableAccelerated = false;
-      if (enableAccelerated) {
-        moreRules.add(AcceleratedFilterRule.INSTANCE);
-      } else {
-        moreRules.add(FilterRule.INSTANCE);
-      }
-
       return PlannerPhase.mergedRuleSets(LOGICAL_RULE_SET, RuleSets.ofList(moreRules));
     }
 
@@ -373,7 +363,6 @@ public enum PlannerPhase {
     public RuleSet getRules(OptimizerRulesContext context) {
 
       List<RelOptRule> moreRules = new ArrayList<>();
-      moreRules.add(AcceleratedFilterPrule.INSTANCE);
 
       final RuleSet physicalRules = PlannerPhase.getPhysicalRules(context);
       return PlannerPhase.mergedRuleSets(physicalRules, RuleSets.ofList(moreRules));
@@ -701,8 +690,7 @@ public enum PlannerPhase {
        * Crel => Drel
        */
       ProjectRule.INSTANCE,
-      // This is moved to the moreRules list
-      // FilterRule.INSTANCE,
+      FilterRule.INSTANCE,
       WindowRule.INSTANCE,
       AggregateRule.INSTANCE,
       LimitRule.INSTANCE,
