@@ -16,6 +16,7 @@
 package com.dremio.exec.planner.physical.visitor;
 
 import com.dremio.exec.planner.physical.ExchangePrel;
+import com.dremio.exec.planner.physical.FletcherFilterProjectPrel;
 import com.dremio.exec.planner.physical.JoinPrel;
 import com.dremio.exec.planner.physical.LeafPrel;
 import com.dremio.exec.planner.physical.Prel;
@@ -37,6 +38,11 @@ public class BasePrelVisitor<RETURN, EXTRA, EXCEP extends Throwable> implements 
 
   @Override
   public RETURN visitProject(ProjectPrel prel, EXTRA value) throws EXCEP {
+    return visitPrel(prel, value);
+  }
+
+  @Override
+  public RETURN visitFletcherFilterProject(FletcherFilterProjectPrel prel, EXTRA value) throws EXCEP {
     return visitPrel(prel, value);
   }
 

@@ -113,7 +113,7 @@ import com.dremio.exec.planner.physical.FilterNLJMergeRule;
 import com.dremio.exec.planner.physical.FilterProjectNLJRule;
 import com.dremio.exec.planner.physical.FilterPrule;
 import com.dremio.exec.planner.physical.FlattenPrule;
-import com.dremio.exec.planner.physical.FletcherFilterPrule;
+import com.dremio.exec.planner.physical.FletcherFilterProjectPrule;
 import com.dremio.exec.planner.physical.HashAggPrule;
 import com.dremio.exec.planner.physical.HashJoinPrule;
 import com.dremio.exec.planner.physical.LimitPrule;
@@ -389,7 +389,10 @@ public enum PlannerPhase {
     @Override
     public RuleSet getRules(OptimizerRulesContext context) {
       List<RelOptRule> ruleList = new ArrayList<>();
-      ruleList.add(FletcherFilterPrule.INSTANCE);
+
+      // ruleList.add(FletcherFilterPrule.INSTANCE);
+      ruleList.add(FletcherFilterProjectPrule.INSTANCE);
+
       return RuleSets.ofList(ImmutableSet.copyOf(ruleList));
     }
   };
