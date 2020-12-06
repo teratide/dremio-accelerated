@@ -188,7 +188,7 @@
                 <arg>-Xep:PreconditionsInvalidPlaceholder:ERROR</arg>
                 <!-- Build JNI headers -->
                 <arg>-h</arg>
-                <arg>.</arg>
+                <arg>./native/src</arg>
               </compilerArgs>
             </configuration>
             <dependencies>
