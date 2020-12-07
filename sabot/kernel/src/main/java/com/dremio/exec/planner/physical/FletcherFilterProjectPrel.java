@@ -34,7 +34,7 @@ import org.apache.calcite.sql.SqlKind;
 import com.dremio.common.logical.data.NamedExpression;
 import com.dremio.exec.expr.ExpressionTreeMaterializer;
 import com.dremio.exec.physical.base.PhysicalOperator;
-import com.dremio.exec.physical.config.Project;
+import com.dremio.exec.physical.config.FletcherFilterProject;
 import com.dremio.exec.planner.common.ProjectRelBase;
 import com.dremio.exec.planner.logical.ParseContext;
 import com.dremio.exec.planner.physical.DistributionTrait.DistributionField;
@@ -79,7 +79,7 @@ public class FletcherFilterProjectPrel extends ProjectRelBase implements Prel {
       .setSelectionVectorMode(childSchema.getSelectionVectorMode())
       .build();
 
-    return new Project(
+    return new FletcherFilterProject(
       creator.props(this, null, schema, RESERVE, LIMIT),
       childPOP,
       exprs);

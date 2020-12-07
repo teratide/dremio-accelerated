@@ -22,6 +22,7 @@ import com.dremio.exec.physical.config.DictionaryLookupPOP;
 import com.dremio.exec.physical.config.EmptyValues;
 import com.dremio.exec.physical.config.Filter;
 import com.dremio.exec.physical.config.FlattenPOP;
+import com.dremio.exec.physical.config.FletcherFilterProject;
 import com.dremio.exec.physical.config.HashAggregate;
 import com.dremio.exec.physical.config.HashJoinPOP;
 import com.dremio.exec.physical.config.HashPartitionSender;
@@ -62,6 +63,7 @@ public interface PhysicalVisitor<RETURN, EXTRA, EXCEP extends Throwable> {
   public RETURN visitAcceleratedFilter(AcceleratedFilter filter, EXTRA value) throws EXCEP;
   public RETURN visitUnion(UnionAll union, EXTRA value) throws EXCEP;
   public RETURN visitProject(Project project, EXTRA value) throws EXCEP;
+  public RETURN visitFletcherFilterProject(FletcherFilterProject project, EXTRA value) throws EXCEP;
   public RETURN visitDictionaryLookup(DictionaryLookupPOP dictionaryLookupPOP, EXTRA value) throws EXCEP;
   public RETURN visitSort(AbstractSort sort, EXTRA value) throws EXCEP;
   public RETURN visitLimit(Limit limit, EXTRA value) throws EXCEP;
