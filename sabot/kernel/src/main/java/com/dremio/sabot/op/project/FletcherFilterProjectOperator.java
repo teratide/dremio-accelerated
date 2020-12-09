@@ -62,7 +62,7 @@ import com.dremio.exec.expr.TypeHelper;
 import com.dremio.exec.expr.ValueVectorReadExpression;
 import com.dremio.exec.expr.fn.ComplexWriterFunctionHolder;
 import com.dremio.exec.physical.config.ComplexToJson;
-import com.dremio.exec.physical.config.Project;
+import com.dremio.exec.physical.config.FletcherFilterProject;
 import com.dremio.exec.proto.UserBitShared.OperatorProfileDetails;
 import com.dremio.exec.record.BatchSchema;
 import com.dremio.exec.record.BatchSchema.SelectionVectorMode;
@@ -84,9 +84,9 @@ import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 
 public class FletcherFilterProjectOperator implements SingleInputOperator {
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ProjectOperator.class);
+  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(FletcherFilterProjectOperator.class);
 
-  private final Project config;
+  private final FletcherFilterProject config;
   private final OperatorContext context;
   private final ExpressionEvaluationOptions projectorOptions;
   private final VectorContainer outgoing;
@@ -106,7 +106,7 @@ public class FletcherFilterProjectOperator implements SingleInputOperator {
 
   private static Set<ExpressionHashKey> exprHashSet = ConcurrentHashMap.newKeySet();
 
-  public FletcherFilterProjectOperator(final OperatorContext context, final Project config) throws OutOfMemoryException {
+  public FletcherFilterProjectOperator(final OperatorContext context, final FletcherFilterProject config) throws OutOfMemoryException {
     this.config = config;
     this.context = context;
     this.projectorOptions = new ExpressionEvaluationOptions(context.getOptions());
@@ -127,7 +127,7 @@ public class FletcherFilterProjectOperator implements SingleInputOperator {
     final List<TransferPair> transfers = new ArrayList<>();
 
     final ClassGenerator<Projector> cg = context.getClassProducer().createGenerator(Projector
-      .TEMPLATE_DEFINITION).getRoot();
+      .FLETCHER_DEFINITION).getRoot();
 
     final IntHashSet transferFieldIds = new IntHashSet();
 
@@ -366,11 +366,11 @@ public class FletcherFilterProjectOperator implements SingleInputOperator {
 
   }
 
-  public static class ProjectCreator implements SingleInputOperator.Creator<Project>{
+  public static class ProjectCreator implements SingleInputOperator.Creator<FletcherFilterProject>{
 
     @Override
-    public SingleInputOperator create(OperatorContext context, Project operator) throws ExecutionSetupException {
-      return new ProjectOperator(context, operator);
+    public SingleInputOperator create(OperatorContext context, FletcherFilterProject operator) throws ExecutionSetupException {
+      return new FletcherFilterProjectOperator(context, operator);
     }
 
   }
@@ -379,8 +379,8 @@ public class FletcherFilterProjectOperator implements SingleInputOperator {
 
     @Override
     public SingleInputOperator create(OperatorContext context, ComplexToJson operator) throws ExecutionSetupException {
-      Project project = new Project(operator.getProps(), null, null);
-      return new ProjectOperator(context, project);
+      FletcherFilterProject project = new FletcherFilterProject(operator.getProps(), null, null);
+      return new FletcherFilterProjectOperator(context, project);
     }
 
   }
@@ -417,7 +417,7 @@ public class FletcherFilterProjectOperator implements SingleInputOperator {
       final LogicalExpression expr = context.getClassProducer().materializeAndAllowComplex(options,
         namedExpression.getExpr(), incoming);
       final LogicalExpression originalExpression = ((CodeGenContext) expr).getChild();
-      switch (ProjectOperator.getEvalMode(incoming, originalExpression, transferFieldIds)) {
+      switch (FletcherFilterProjectOperator.getEvalMode(incoming, originalExpression, transferFieldIds)) {
 
         case COMPLEX: {
           LogicalExpression originalExpr = CodeGenerationContextRemover.removeCodeGenContext(expr);

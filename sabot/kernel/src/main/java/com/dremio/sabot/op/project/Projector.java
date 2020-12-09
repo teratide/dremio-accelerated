@@ -31,6 +31,8 @@ public interface Projector {
   void projectRecords(final int recordCount);
   TemplateClassDefinition<Projector> TEMPLATE_DEFINITION = new TemplateClassDefinition<Projector>(Projector.class, ProjectorTemplate.class);
 
+  TemplateClassDefinition<Projector> FLETCHER_DEFINITION = new TemplateClassDefinition<Projector>(Projector.class, FletcherFilterProjectTemplate.class);
+
   public interface ComplexWriterCreator {
     public ComplexWriter addComplexWriter(String name);
   }
