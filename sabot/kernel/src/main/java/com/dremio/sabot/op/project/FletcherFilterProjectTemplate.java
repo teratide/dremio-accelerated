@@ -80,6 +80,11 @@ public abstract class FletcherFilterProjectTemplate implements Projector {
     doSetup(context, incoming, outgoing, writerCreator);
   }
 
+  @Override
+  public List<TransferPair> getTransfers() {
+    return this.transfers;
+  }
+
   public abstract void doSetup(@Named("context") FunctionContext context, @Named("incoming") VectorAccessible incoming, @Named("outgoing") VectorAccessible outgoing, @Named("writerCreator") ComplexWriterCreator writerCreator);
   public abstract void doEval(@Named("inIndex") int inIndex, @Named("outIndex") int outIndex);
 

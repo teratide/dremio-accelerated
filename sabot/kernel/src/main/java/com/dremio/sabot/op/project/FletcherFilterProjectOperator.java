@@ -106,6 +106,12 @@ public class FletcherFilterProjectOperator implements SingleInputOperator {
 
   private static Set<ExpressionHashKey> exprHashSet = ConcurrentHashMap.newKeySet();
 
+  // Load native library
+  static {
+    System.load("/usr/lib64/libNativeFletcher.so");
+  }
+  private native boolean doNativeFletcher(int records, long f_validity, long f_value, long t_validity, long t_value);
+
   public FletcherFilterProjectOperator(final OperatorContext context, final FletcherFilterProject config) throws OutOfMemoryException {
     this.config = config;
     this.context = context;
@@ -245,7 +251,13 @@ public class FletcherFilterProjectOperator implements SingleInputOperator {
 
     splitter.projectRecords(recordsConsumedCurrentBatch, javaCodeGenWatch, gandivaCodeGenWatch);
     javaCodeGenWatch.start();
+
+//    TransferPair transfer = projector.getTransfers().get(0);
+//    Long t_validity = transfer.getTo().getValidityBuffer().memoryAddress();
+//    Long t_value = transfer.getTo().getDataBuffer().memoryAddress();
     projector.projectRecords(recordsConsumedCurrentBatch);
+    // doNativeFletcher(recordsConsumedCurrentBatch, transfer.);
+
     javaCodeGenWatch.stop();
 
     setValueCount(recordsConsumedCurrentBatch);
