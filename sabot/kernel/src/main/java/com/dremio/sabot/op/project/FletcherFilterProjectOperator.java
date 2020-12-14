@@ -27,6 +27,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+import com.dremio.exec.record.*;
+import org.apache.arrow.memory.BufferAllocator;
+import org.apache.arrow.memory.ArrowBuf;
 import org.apache.arrow.memory.OutOfMemoryException;
 import org.apache.arrow.vector.AllocationHelper;
 import org.apache.arrow.vector.ValueVector;
@@ -64,12 +67,7 @@ import com.dremio.exec.expr.fn.ComplexWriterFunctionHolder;
 import com.dremio.exec.physical.config.ComplexToJson;
 import com.dremio.exec.physical.config.FletcherFilterProject;
 import com.dremio.exec.proto.UserBitShared.OperatorProfileDetails;
-import com.dremio.exec.record.BatchSchema;
 import com.dremio.exec.record.BatchSchema.SelectionVectorMode;
-import com.dremio.exec.record.TypedFieldId;
-import com.dremio.exec.record.VectorAccessible;
-import com.dremio.exec.record.VectorAccessibleComplexWriter;
-import com.dremio.exec.record.VectorContainer;
 import com.dremio.sabot.exec.context.OperatorContext;
 import com.dremio.sabot.exec.context.OperatorStats;
 import com.dremio.sabot.op.project.Projector.ComplexWriterCreator;
@@ -142,7 +140,7 @@ public class FletcherFilterProjectOperator implements SingleInputOperator {
       context, projectorOptions, outgoing, null, nonDirectExprs);
 
     outgoing.buildSchema(SelectionVectorMode.NONE);
-    outgoing.setInitialCapacity(context.getTargetBatchSize());
+    outgoing.setInitialCapacity(1); // Only a single record in the result because aggregate is performed in fletcher and result is a single double
     state = State.CAN_CONSUME;
     initialSchema = outgoing.getSchema();
     splitter.setupProjector(outgoing, javaCodeGenWatch, gandivaCodeGenWatch);
@@ -249,19 +247,15 @@ public class FletcherFilterProjectOperator implements SingleInputOperator {
     state.is(State.CAN_PRODUCE);
     allocateNew();
 
-    splitter.projectRecords(recordsConsumedCurrentBatch, javaCodeGenWatch, gandivaCodeGenWatch);
-    javaCodeGenWatch.start();
-
-//    TransferPair transfer = projector.getTransfers().get(0);
-//    Long t_validity = transfer.getTo().getValidityBuffer().memoryAddress();
-//    Long t_value = transfer.getTo().getDataBuffer().memoryAddress();
-    projector.projectRecords(recordsConsumedCurrentBatch);
-    // doNativeFletcher(recordsConsumedCurrentBatch, transfer.);
-
-    javaCodeGenWatch.stop();
-
-    setValueCount(recordsConsumedCurrentBatch);
-    outgoing.setRecordCount(recordsConsumedCurrentBatch);
+    outgoing.allocateNew();
+    ValueVector outVec = outgoing.getWrappers().get(0).getValueVector();
+    VectorContainer in = (VectorContainer) incoming;
+    ValueVector inVec = in.getWrappers().get(0).getValueVector();
+    Long outValidity = outVec.getValidityBuffer().memoryAddress();
+    Long outValue = outVec.getDataBuffer().memoryAddress();
+    Long inValidity = inVec.getValidityBuffer().memoryAddress();
+    Long inValue = inVec.getDataBuffer().memoryAddress();
+    // doNativeFletcher();
 
     state = State.CAN_CONSUME;
 
