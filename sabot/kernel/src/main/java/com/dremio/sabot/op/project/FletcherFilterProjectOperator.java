@@ -26,7 +26,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
+import org.apache.arrow.gandiva.expression.ArrowTypeHelper;
+import org.apache.arrow.memory.ArrowBuf;
 import org.apache.arrow.memory.OutOfMemoryException;
 import org.apache.arrow.vector.AllocationHelper;
 import org.apache.arrow.vector.ValueVector;
@@ -110,7 +113,7 @@ public class FletcherFilterProjectOperator implements SingleInputOperator {
   static {
     System.load("/usr/lib64/libNativeFletcher.so");
   }
-  private native boolean doNativeFletcher(int records, long f_validity, long f_value, long t_validity, long t_value);
+  private native double doNativeFletcher(byte[] schema, int numberOfRecords, long[] inBufAddresses, long[] inBufSizes);
 
   public FletcherFilterProjectOperator(final OperatorContext context, final FletcherFilterProject config) throws OutOfMemoryException {
     this.config = config;
@@ -249,15 +252,23 @@ public class FletcherFilterProjectOperator implements SingleInputOperator {
     state.is(State.CAN_PRODUCE);
     allocateNew();
 
+    VectorContainer in = (VectorContainer) incoming;
+    ArrowBuf[] tripSecondsBuffers = in.getValueAccessorById(ValueVector.class, 0).getValueVector().getBuffers(false);
+    ArrowBuf[] companyBuffers = in.getValueAccessorById(ValueVector.class, 1).getValueVector().getBuffers(false);
+    ArrowBuf[] buffers = (ArrowBuf[]) org.apache.commons.lang.ArrayUtils.addAll(tripSecondsBuffers, companyBuffers);
+
+    BatchSchema schema = in.getSchema();
+    byte[] schemaAsBytes = ArrowTypeHelper.arrowSchemaToProtobuf(schema).toByteArray();
+    int numberOfRecords = in.getRecordCount();
+    long[] inBufAddresses = Stream.of(buffers).mapToLong(b -> b.memoryAddress()).toArray();
+    long[] inBufSizes = Stream.of(buffers).mapToLong(b -> b.readableBytes()).toArray();
+
+    double result = doNativeFletcher(schemaAsBytes, numberOfRecords, inBufAddresses, inBufSizes);
+
     outgoing.allocateNew();
     ValueVector outVec = outgoing.getWrappers().get(0).getValueVector();
-    VectorContainer in = (VectorContainer) incoming;
-    ValueVector inVec = in.getWrappers().get(0).getValueVector();
-    Long outValidity = outVec.getValidityBuffer().memoryAddress();
-    Long outValue = outVec.getDataBuffer().memoryAddress();
-    Long inValidity = inVec.getValidityBuffer().memoryAddress();
-    Long inValue = inVec.getDataBuffer().memoryAddress();
-    doNativeFletcher(recordsConsumedCurrentBatch, inValidity, inValue, outValidity, outValue);
+    outVec.getValidityBuffer().setByte(0, 1);
+    outVec.getDataBuffer().setDouble(0, result);
 
     setValueCount(1);
     outgoing.setRecordCount(1);

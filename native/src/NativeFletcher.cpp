@@ -1,17 +1,52 @@
 #include <jni.h>       // JNI header provided by JDK
 #include <iostream>    // C++ standard IO header
+#include <arrow/api.h>
+#include "jni/Assertions.h"
+#include "jni/Converters.h"
 #include "com_dremio_sabot_op_project_FletcherFilterProjectOperator.h"  // Generated
+
 using namespace std;
 
-JNIEXPORT jboolean JNICALL Java_com_dremio_sabot_op_project_FletcherFilterProjectOperator_doNativeFletcher(JNIEnv *env, jobject filterProjectOp, jint records, jlong f_validity, jlong f_value, jlong t_validity, jlong t_value) {
-  std::cout << "OUTPUT BUFFER " << std::endl << "Validity: \t" << t_validity << std::endl << "Value: \t" << t_value << std::endl;
-  std::cout << "INPUT BUFFER " << std::endl << "Validity: \t" << f_validity << std::endl << "Value: \t" << f_value << std::endl;
+double trivialCpuVersion(const std::shared_ptr<arrow::RecordBatch> &record_batch) {
 
-  long int *outValidity = reinterpret_cast<long int*>(t_validity);
-  long int *outValue = reinterpret_cast<long int*>(t_value);
+    auto strings = std::static_pointer_cast<arrow::StringArray>(record_batch->column(0));
+    auto numbers = std::static_pointer_cast<arrow::Int64Array>(record_batch->column(1));
 
-  *outValidity = 1;
-  *outValue = 1000000;
+    const int64_t* raw_numbers = numbers->raw_values();
 
-  return true;
+    int64_t sum = 0;
+    for (int i = 0; i < record_batch->num_rows(); i++) {
+
+        if (strings->GetString(i) == "Blue Ribbon Taxi Association Inc.") {
+            sum += raw_numbers[i];
+        }
+    }
+
+    std::cout << "SUM: \t" << sum << std::endl;
+
+    return (double) sum;
+}
+
+JNIEXPORT jdouble JNICALL Java_com_dremio_sabot_op_project_FletcherFilterProjectOperator_doNativeFletcher(JNIEnv *env, jobject, jbyteArray schemaAsBytes, jint numberOfRecords, jlongArray inBufAddresses, jlongArray inBufSizes) {
+
+  std::cout << "STARTING NATIVE FLETCHER CODE v2" << std::endl;
+
+  // Extract input RecordBatch
+  int inBufLen = env->GetArrayLength(inBufAddresses);
+  ASSERT(inBufLen == env->GetArrayLength(inBufSizes), "mismatch in arraylen of buf_addrs and buf_sizes");
+
+  // TODO: Read schema from schemaAsBytes argument
+  std::shared_ptr<arrow::Field> field_a, field_b;
+  std::shared_ptr<arrow::Schema> schema;
+  field_a = arrow::field("Trip_Seconds", arrow::float64());
+  field_b = arrow::field("Company", arrow::utf8());
+  schema = arrow::schema({field_a, field_b});
+
+  jlong *inAddresses = env->GetLongArrayElements(inBufAddresses, 0);
+  jlong *inSizes = env->GetLongArrayElements(inBufSizes, 0);
+
+  std::shared_ptr<arrow::RecordBatch> inBatch;
+  ASSERT_OK(make_record_batch_with_buf_addrs(schema, numberOfRecords, inAddresses, inSizes, numberOfRecords, &inBatch));
+
+  return trivialCpuVersion(inBatch);
 }
