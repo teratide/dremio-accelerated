@@ -7,12 +7,3 @@ filter: src/NativeFilter.cpp src/com_dremio_sabot_op_filter_FilterTemplateAccele
 
 fletcher: src/NativeFletcher.cpp src/com_dremio_sabot_op_project_FletcherFilterProjectOperator.h
 	g++ -fPIC -I"$(JAVA_HOME)/include" -I"$(JAVA_HOME)/include/linux" -shared -o $(JPATH)/libNativeFletcher.so src/NativeFletcher.cpp
-
-fletcher: src/NativeFletcher.cpp src/com_dremio_sabot_op_project_FletcherFilterProjectOperator.h
-	g++ -fPIC -I"$(JAVA_HOME)/include" -I"$(JAVA_HOME)/include/linux" -shared -o $(JPATH)/libNativeFletcher.so src/NativeFletcher.cpp
-
-fletcher: src/NativeFletcher.cpp src/com_dremio_sabot_op_project_FletcherFilterProjectOperator.h
-	g++ -fPIC -I"$(JAVA_HOME)/include" -I"$(JAVA_HOME)/include/linux" -shared -o $(JPATH)/libNativeFletcher.so src/NativeFletcher.cpp
-
-fletcher: src/NativeFletcher.cpp src/com_dremio_sabot_op_project_FletcherFilterProjectOperator.h
-	g++ -fPIC -I"$(JAVA_HOME)/include" -I"$(JAVA_HOME)/include/linux" -shared -o $(JPATH)/libNativeFletcher.so src/NativeFletcher.cpp

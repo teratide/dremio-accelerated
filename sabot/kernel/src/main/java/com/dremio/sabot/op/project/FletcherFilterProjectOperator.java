@@ -27,9 +27,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
-import com.dremio.exec.record.*;
-import org.apache.arrow.memory.BufferAllocator;
-import org.apache.arrow.memory.ArrowBuf;
 import org.apache.arrow.memory.OutOfMemoryException;
 import org.apache.arrow.vector.AllocationHelper;
 import org.apache.arrow.vector.ValueVector;
@@ -67,7 +64,12 @@ import com.dremio.exec.expr.fn.ComplexWriterFunctionHolder;
 import com.dremio.exec.physical.config.ComplexToJson;
 import com.dremio.exec.physical.config.FletcherFilterProject;
 import com.dremio.exec.proto.UserBitShared.OperatorProfileDetails;
+import com.dremio.exec.record.BatchSchema;
 import com.dremio.exec.record.BatchSchema.SelectionVectorMode;
+import com.dremio.exec.record.TypedFieldId;
+import com.dremio.exec.record.VectorAccessible;
+import com.dremio.exec.record.VectorAccessibleComplexWriter;
+import com.dremio.exec.record.VectorContainer;
 import com.dremio.sabot.exec.context.OperatorContext;
 import com.dremio.sabot.exec.context.OperatorStats;
 import com.dremio.sabot.op.project.Projector.ComplexWriterCreator;
@@ -255,7 +257,11 @@ public class FletcherFilterProjectOperator implements SingleInputOperator {
     Long outValue = outVec.getDataBuffer().memoryAddress();
     Long inValidity = inVec.getValidityBuffer().memoryAddress();
     Long inValue = inVec.getDataBuffer().memoryAddress();
-    // doNativeFletcher();
+    doNativeFletcher(recordsConsumedCurrentBatch, inValidity, inValue, outValidity, outValue);
+
+    setValueCount(1);
+    outgoing.setRecordCount(1);
+    outVec.setValueCount(1);
 
     state = State.CAN_CONSUME;
 
@@ -266,7 +272,7 @@ public class FletcherFilterProjectOperator implements SingleInputOperator {
         .build(logger);
     }
 
-    return recordsConsumedCurrentBatch;
+    return 1;
   }
 
   @Override
