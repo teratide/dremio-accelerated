@@ -9,12 +9,12 @@ using namespace std;
 
 double trivialCpuVersion(const std::shared_ptr<arrow::RecordBatch> &record_batch) {
 
-    auto strings = std::static_pointer_cast<arrow::StringArray>(record_batch->column(0));
-    auto numbers = std::static_pointer_cast<arrow::Int64Array>(record_batch->column(1));
+    auto strings = std::static_pointer_cast<arrow::StringArray>(record_batch->column(1));
+    auto numbers = std::static_pointer_cast<arrow::DoubleArray>(record_batch->column(0));
 
-    const int64_t* raw_numbers = numbers->raw_values();
+    const double* raw_numbers = numbers->raw_values();
 
-    int64_t sum = 0;
+    double sum = 0.0;
     for (int i = 0; i < record_batch->num_rows(); i++) {
 
         if (strings->GetString(i) == "Blue Ribbon Taxi Association Inc.") {
@@ -22,14 +22,14 @@ double trivialCpuVersion(const std::shared_ptr<arrow::RecordBatch> &record_batch
         }
     }
 
-    std::cout << "SUM: \t" << sum << std::endl;
+    std::cout << "CPU Sum: \t" << sum << std::endl;
 
-    return (double) sum;
+    return sum;
 }
 
 JNIEXPORT jdouble JNICALL Java_com_dremio_sabot_op_project_FletcherFilterProjectOperator_doNativeFletcher(JNIEnv *env, jobject, jbyteArray schemaAsBytes, jint numberOfRecords, jlongArray inBufAddresses, jlongArray inBufSizes) {
 
-  std::cout << "STARTING NATIVE FLETCHER CODE v2" << std::endl;
+  std::cout << "STARTING NATIVE FLETCHER CODE" << std::endl;
 
   // Extract input RecordBatch
   int inBufLen = env->GetArrayLength(inBufAddresses);
@@ -38,6 +38,7 @@ JNIEXPORT jdouble JNICALL Java_com_dremio_sabot_op_project_FletcherFilterProject
   // TODO: Read schema from schemaAsBytes argument
   std::shared_ptr<arrow::Field> field_a, field_b;
   std::shared_ptr<arrow::Schema> schema;
+  // TODO: Make fields nullable
   field_a = arrow::field("Trip_Seconds", arrow::float64());
   field_b = arrow::field("Company", arrow::utf8());
   schema = arrow::schema({field_a, field_b});

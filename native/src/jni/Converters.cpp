@@ -73,7 +73,7 @@ Status make_record_batch_with_buf_addrs(std::shared_ptr<arrow::Schema> schema, i
             return Status::Invalid("insufficient number of in_buf_addrs");
         }
 
-        if (!nullable) {
+        if (!nullable || true) {  // TODO: Remove true and make fields nullable
             jlong validity_addr = in_buf_addrs[buf_idx++];
             jlong validity_size = in_buf_sizes[sz_idx++];
             auto validity = std::shared_ptr<arrow::Buffer>(
