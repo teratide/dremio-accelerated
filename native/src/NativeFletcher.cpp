@@ -38,9 +38,8 @@ JNIEXPORT jdouble JNICALL Java_com_dremio_sabot_op_project_FletcherFilterProject
   // TODO: Read schema from schemaAsBytes argument
   std::shared_ptr<arrow::Field> field_a, field_b;
   std::shared_ptr<arrow::Schema> schema;
-  // TODO: Make fields nullable
-  field_a = arrow::field("Trip_Seconds", arrow::float64());
-  field_b = arrow::field("Company", arrow::utf8());
+  field_a = arrow::field("Trip_Seconds", arrow::float64(), true);
+  field_b = arrow::field("Company", arrow::utf8(), true);
   schema = arrow::schema({field_a, field_b});
 
   jlong *inAddresses = env->GetLongArrayElements(inBufAddresses, 0);
