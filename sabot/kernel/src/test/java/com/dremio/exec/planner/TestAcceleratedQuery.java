@@ -25,4 +25,10 @@ public class TestAcceleratedQuery extends BaseTestQuery {
     String query = "SELECT SUM(Trip_Seconds) FROM cp.\"Taxi_Trips_300.parquet\" WHERE Company LIKE 'Blue Ribbon Taxi Association Inc.'";
     test(query);
   }
+
+  @Test
+  public void testBigTaxiQuery() throws Exception {
+    String query = "SELECT SUM(Trip_Seconds) FROM cp.\"Taxi_Trips_10M.parquet\" WHERE Company LIKE 'Blue Ribbon Taxi Association Inc.'";
+    test(query);
+  }
 }

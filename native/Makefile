@@ -16,3 +16,6 @@ javaResizableBuffer:
 
 assertions:
 	g++ -fPIC -I"$(JAVA_HOME)/include" -I"$(JAVA_HOME)/include/linux" -c src/jni/Assertions.cpp
+
+clean:
+	rm *.o

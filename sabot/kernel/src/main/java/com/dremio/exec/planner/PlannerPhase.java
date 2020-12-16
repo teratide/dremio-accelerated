@@ -108,6 +108,7 @@ import com.dremio.exec.planner.logical.SortRule;
 import com.dremio.exec.planner.logical.UnionAllRule;
 import com.dremio.exec.planner.logical.ValuesRule;
 import com.dremio.exec.planner.logical.WindowRule;
+import com.dremio.exec.planner.physical.BigFletcherPrule;
 import com.dremio.exec.planner.physical.EmptyPrule;
 import com.dremio.exec.planner.physical.FilterNLJMergeRule;
 import com.dremio.exec.planner.physical.FilterProjectNLJRule;
@@ -393,6 +394,7 @@ public enum PlannerPhase {
       // ruleList.add(FletcherFilterPrule.INSTANCE);
       // ruleList.add(FletcherFilterProjectPrule.INSTANCE);
        ruleList.add(FletcherPrule.INSTANCE);
+       ruleList.add(BigFletcherPrule.INSTANCE);
 
       return RuleSets.ofList(ImmutableSet.copyOf(ruleList));
     }
