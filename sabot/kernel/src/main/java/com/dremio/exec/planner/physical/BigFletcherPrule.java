@@ -17,6 +17,7 @@ package com.dremio.exec.planner.physical;
 
 import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
+import org.apache.calcite.rel.InvalidRelException;
 
 /**
  * Rule that targets Fabian's targeted physical operators for big parquet files and converts them to a FletcherPrel.
@@ -45,7 +46,15 @@ public class BigFletcherPrule extends RelOptRule {
     final FilterPrel  filter = (FilterPrel) call.rel(5);
 
     // (RelOptCluster cluster, RelTraitSet traits, RelNode child, List<RexNode> exps, RelDataType rowType)
-    call.transformTo(new FletcherFilterProjectPrel(topProject.getCluster(), filter.getInput().getTraitSet(), filter.getInput(), topProject.getChildExps(), topProject.getRowType()));
+    final FletcherFilterProjectPrel fletcher = new FletcherFilterProjectPrel(topProject.getCluster(), filter.getInput().getTraitSet(), filter.getInput(), topProject.getChildExps(), topProject.getRowType());
+
+    try {
+      // (RelOptCluster cluster, RelTraitSet traits, RelNode child, boolean indicator, ImmutableBitSet groupSet, List<ImmutableBitSet> groupSets, List<AggregateCall> aggCalls, OperatorPhase phase)
+      final StreamAggPrel newAggregate = StreamAggPrel.create(topStreamAgg.getCluster(), topStreamAgg.getTraitSet(), fletcher, false, topStreamAgg.getGroupSet(), topStreamAgg.getGroupSets(), topStreamAgg.getAggCallList(), topStreamAgg.getOperatorPhase());
+      call.transformTo(newAggregate);
+    } catch (InvalidRelException e) {
+      e.printStackTrace();
+    }
   }
 
 }
