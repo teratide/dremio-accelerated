@@ -50,7 +50,8 @@ public class BigFletcherPrule extends RelOptRule {
 
     try {
       // (RelOptCluster cluster, RelTraitSet traits, RelNode child, boolean indicator, ImmutableBitSet groupSet, List<ImmutableBitSet> groupSets, List<AggregateCall> aggCalls, OperatorPhase phase)
-      final StreamAggPrel newAggregate = StreamAggPrel.create(topStreamAgg.getCluster(), topStreamAgg.getTraitSet(), fletcher, false, topStreamAgg.getGroupSet(), topStreamAgg.getGroupSets(), topStreamAgg.getAggCallList(), topStreamAgg.getOperatorPhase());
+      final UnionExchangePrel newUnion = new UnionExchangePrel(unionExchange.getCluster(), unionExchange.getTraitSet(), fletcher);
+      final StreamAggPrel newAggregate = StreamAggPrel.create(topStreamAgg.getCluster(), topStreamAgg.getTraitSet(), newUnion, false, topStreamAgg.getGroupSet(), topStreamAgg.getGroupSets(), topStreamAgg.getAggCallList(), topStreamAgg.getOperatorPhase());
       call.transformTo(newAggregate);
     } catch (InvalidRelException e) {
       e.printStackTrace();
