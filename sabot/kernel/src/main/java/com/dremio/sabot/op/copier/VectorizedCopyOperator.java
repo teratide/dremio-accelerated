@@ -28,12 +28,11 @@ import com.dremio.exec.record.BatchSchema.SelectionVectorMode;
 import com.dremio.exec.record.VectorAccessible;
 import com.dremio.exec.record.VectorContainer;
 import com.dremio.exec.record.VectorWrapper;
-import com.dremio.exec.record.selection.SelectionVector2;
+import com.dremio.exec.record.selection.SelectionVector4;
 import com.dremio.sabot.exec.context.MetricDef;
 import com.dremio.sabot.exec.context.OperatorContext;
 import com.dremio.sabot.op.copier.FieldBufferCopier.Cursor;
 import com.dremio.sabot.op.spi.SingleInputOperator;
-import com.google.common.base.Preconditions;
 
 public class VectorizedCopyOperator implements SingleInputOperator {
 
@@ -44,7 +43,7 @@ public class VectorizedCopyOperator implements SingleInputOperator {
   private VectorAccessible incoming;
   private VectorContainer output;
   private VectorContainer buffered;
-  private SelectionVector2 sv2;
+  private SelectionVector4 sv2;
   private List<TransferPair> inToOutTransferPairs = new ArrayList<>();
   private List<TransferPair> bufferedToOutTransferPairs = new ArrayList<>();
   private boolean straightCopy;
@@ -73,7 +72,7 @@ public class VectorizedCopyOperator implements SingleInputOperator {
   public VectorAccessible setup(VectorAccessible incoming) {
     state.is(State.NEEDS_SETUP);
 
-    Preconditions.checkArgument(incoming.getSchema().getSelectionVectorMode() != SelectionVectorMode.FOUR_BYTE);
+    // Preconditions.checkArgument(incoming.getSchema().getSelectionVectorMode() != SelectionVectorMode.FOUR_BYTE);
     this.straightCopy = incoming.getSchema() == null || incoming.getSchema().getSelectionVectorMode() == SelectionVectorMode.NONE;
     this.incoming = incoming;
     this.output = context.createOutputVectorContainer(incoming.getSchema());
@@ -81,7 +80,7 @@ public class VectorizedCopyOperator implements SingleInputOperator {
     this.buffered = context.createOutputVectorContainer(incoming.getSchema());
     this.buffered.buildSchema(SelectionVectorMode.NONE);
 
-    this.sv2 = straightCopy ? null : incoming.getSelectionVector2();
+    this.sv2 = straightCopy ? null : incoming.getSelectionVector4();
 
     // set up transfer pairs from incoming to output
     for (VectorWrapper<?> vv : incoming) {

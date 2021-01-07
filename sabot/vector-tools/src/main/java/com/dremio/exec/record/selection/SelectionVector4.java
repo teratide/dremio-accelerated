@@ -16,6 +16,7 @@
 package com.dremio.exec.record.selection;
 
 import org.apache.arrow.memory.ArrowBuf;
+import org.apache.arrow.memory.BufferAllocator;
 
 import com.dremio.exec.record.DeadBuf;
 import com.google.common.base.Preconditions;
@@ -27,6 +28,7 @@ public class SelectionVector4 implements AutoCloseable {
   private int recordCount;
   private int start;
   private int length;
+  private BufferAllocator allocator = null;
 
   public SelectionVector4(ArrowBuf vector, int recordCount, int batchRecordCount) {
     Preconditions.checkArgument(recordCount < Integer.MAX_VALUE / 4,
@@ -36,6 +38,17 @@ public class SelectionVector4 implements AutoCloseable {
     this.start = 0;
     this.length = Math.min(batchRecordCount, recordCount);
     this.data = vector;
+  }
+
+  public SelectionVector4(ArrowBuf vector, int recordCount, int batchRecordCount, BufferAllocator allocator) {
+    Preconditions.checkArgument(recordCount < Integer.MAX_VALUE / 4,
+      "Currently, Dremio can only support allocations up to 2gb in size.  "
+        + "You requested an allocation of %s bytes.", recordCount * 4);
+    this.recordCount = recordCount;
+    this.start = 0;
+    this.length = Math.min(batchRecordCount, recordCount);
+    this.data = vector;
+    this.allocator = allocator;
   }
 
   public int getTotalCount() {
@@ -111,6 +124,39 @@ public class SelectionVector4 implements AutoCloseable {
       data.release();
       data = DeadBuf.DEAD_BUFFER;
     }
+  }
+
+  public void allocateNew(int size) {
+    clear();
+    data = allocator.buffer(size * 4);
+  }
+
+  public void setIndex(int index, int value) {
+    data.setInt(index * 4, value);
+  }
+
+  public void setRecordCount(int recordCount){
+    this.length = recordCount;
+  }
+
+  public long memoryAddress(){
+    return data.memoryAddress();
+  }
+
+  public ArrowBuf getBuffer(boolean clear) {
+    ArrowBuf bufferHandle = this.data;
+
+    if (clear) {
+      /* Increment the ref count for this buffer */
+      bufferHandle.retain(1);
+
+      /* We are passing ownership of the buffer to the
+       * caller. clear the buffer from within our selection vector
+       */
+      clear();
+    }
+
+    return bufferHandle;
   }
 
   @Override

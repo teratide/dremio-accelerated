@@ -37,7 +37,8 @@ int trivialCpuVersion(const std::shared_ptr<arrow::RecordBatch> &record_batch) {
     return hit;
 }
 
-JNIEXPORT jint JNICALL Java_com_dremio_sabot_op_filter_FilterTemplateAccelerated_doNativeEval(JNIEnv *env, jobject, jbyteArray schemaAsBytes, jint numberOfRecords, jlongArray inBufAddresses, jlongArray inBufSizes) {
+JNIEXPORT jint JNICALL Java_com_dremio_sabot_op_filter_FilterTemplateAccelerated_doNativeEval(JNIEnv *env,
+jobject, jbyteArray schemaAsBytes, jint numberOfRecords, jlongArray inBufAddresses, jlongArray inBufSizes) {
     std::cout << std::endl << "STARTING NATIVE FILTER CODE" << std::endl;
 
     // Extract input RecordBatch
@@ -47,14 +48,15 @@ JNIEXPORT jint JNICALL Java_com_dremio_sabot_op_filter_FilterTemplateAccelerated
     // TODO: Read schema from schemaAsBytes argument
     std::shared_ptr<arrow::Field> field_a, field_b, field_c;
     std::shared_ptr<arrow::Schema> schema;
-    field_a = arrow::field("Trip_Seconds", arrow::float64(), true);
+    field_a = arrow::field("Trip_Seconds", arrow::float64(), true); // TODO: eruit
     field_b = arrow::field("Company", arrow::utf8(), true);
-    field_c = arrow::field("SelectionVector", arrow::uint16(), true);
+    field_c = arrow::field("SelectionVector", arrow::uint16(), true); // TODO: Apart schema
     schema = arrow::schema({field_a, field_b, field_c});
 
     jlong *inAddresses = env->GetLongArrayElements(inBufAddresses, 0);
     jlong *inSizes = env->GetLongArrayElements(inBufSizes, 0);
 
+    // TODO: Arrow api gebruiken, of kan er helemaal uit
     std::shared_ptr<arrow::RecordBatch> inBatch;
     ASSERT_OK(make_record_batch_with_buf_addrs(schema, numberOfRecords, inAddresses, inSizes, numberOfRecords, &inBatch));
 

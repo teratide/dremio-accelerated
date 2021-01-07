@@ -19,16 +19,25 @@ import org.apache.arrow.memory.BufferAllocator;
 
 import com.dremio.exec.record.VectorContainer;
 import com.dremio.exec.record.selection.SelectionVector2;
+import com.dremio.exec.record.selection.SelectionVector4;
 
 /**
  * VectorContainers with sv2 (filters).
  */
 public class VectorContainerWithSV extends VectorContainer {
   private final SelectionVector2 sv2;
+  private final SelectionVector4 sv4;
 
   public VectorContainerWithSV(BufferAllocator allocator, SelectionVector2 sv2) {
     super(allocator);
     this.sv2 = sv2;
+    this.sv4 = null;
+  }
+
+  public VectorContainerWithSV(BufferAllocator allocator, SelectionVector4 sv4) {
+    super(allocator);
+    this.sv4 = sv4;
+    this.sv2 = null;
   }
 
   @Override
@@ -37,8 +46,17 @@ public class VectorContainerWithSV extends VectorContainer {
   }
 
   @Override
+  public SelectionVector4 getSelectionVector4() {
+    return sv4;
+  }
+
+  @Override
   public void close() {
-    sv2.clear();
+    if (sv2 != null) {
+      sv2.clear();
+    } else {
+      sv4.clear();
+    }
     super.close();
   }
 

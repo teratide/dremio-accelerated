@@ -35,6 +35,7 @@ import com.dremio.exec.record.BatchSchema.SelectionVectorMode;
 import com.dremio.exec.record.VectorAccessible;
 import com.dremio.exec.record.VectorContainer;
 import com.dremio.exec.record.VectorWrapper;
+import com.dremio.exec.record.selection.SelectionVector4;
 import com.dremio.sabot.exec.context.OperatorContext;
 import com.dremio.sabot.exec.context.OperatorStats;
 import com.dremio.sabot.op.filter.FilterStats.Metric;
@@ -64,7 +65,7 @@ public class AcceleratedFilterOperator implements SingleInputOperator {
     this.context = context;
     this.filterOptions = new ExpressionEvaluationOptions(context.getOptions());
     this.filterOptions.setCodeGenOption(context.getOptions().getOption(ExecConstants.QUERY_EXEC_OPTION.getOptionName()).getStringVal());
-    this.output = context.createOutputVectorContainerWithSV();
+    this.output = new VectorContainerWithSV(context.getFragmentOutputAllocator(), new SelectionVector4(context.getFragmentOutputAllocator().buffer(300 * 4), 0, 300, context.getFragmentOutputAllocator()));
   }
 
   @Override
@@ -81,7 +82,7 @@ public class AcceleratedFilterOperator implements SingleInputOperator {
       default:
         throw new UnsupportedOperationException();
     }
-    output.buildSchema(SelectionVectorMode.TWO_BYTE);
+    output.buildSchema(SelectionVectorMode.FOUR_BYTE);
     state = State.CAN_CONSUME;
     return output;
   }

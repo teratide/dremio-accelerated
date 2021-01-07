@@ -57,7 +57,7 @@ public class FletcherFilterPrel extends FilterRelBase implements Prel {
     PhysicalOperator childPOP = child.getPhysicalOperator(creator);
 
     return new AcceleratedFilter(
-      creator.props(this, null, childPOP.getProps().getSchema().clone(SelectionVectorMode.TWO_BYTE), RESERVE, LIMIT),
+      creator.props(this, null, childPOP.getProps().getSchema().clone(SelectionVectorMode.FOUR_BYTE), RESERVE, LIMIT),
       childPOP,
       getFilterExpression(new ParseContext(PrelUtil.getSettings(getCluster()))),
       1.0f
@@ -76,7 +76,7 @@ public class FletcherFilterPrel extends FilterRelBase implements Prel {
 
   @Override
   public SelectionVectorMode[] getSupportedEncodings() {
-    return SelectionVectorMode.NONE_AND_TWO;
+    return SelectionVectorMode.NONE_AND_FOUR;
   }
 
   /**
@@ -84,7 +84,7 @@ public class FletcherFilterPrel extends FilterRelBase implements Prel {
    */
   @Override
   public SelectionVectorMode getEncoding() {
-    return SelectionVectorMode.TWO_BYTE;
+    return SelectionVectorMode.FOUR_BYTE;
   }
 
   @Override
