@@ -15,11 +15,19 @@
  */
 package com.dremio.sabot.op.filter;
 
+import java.util.stream.Stream;
+
 import javax.inject.Named;
 
+import org.apache.arrow.gandiva.expression.ArrowTypeHelper;
+import org.apache.arrow.memory.ArrowBuf;
+import org.apache.arrow.vector.ValueVector;
+
 import com.dremio.exec.exception.SchemaChangeException;
+import com.dremio.exec.record.BatchSchema;
 import com.dremio.exec.record.BatchSchema.SelectionVectorMode;
 import com.dremio.exec.record.VectorAccessible;
+import com.dremio.exec.record.VectorContainer;
 import com.dremio.exec.record.selection.SelectionVector2;
 import com.dremio.sabot.exec.context.FunctionContext;
 
@@ -31,17 +39,20 @@ public abstract class FilterTemplateAccelerated implements Filterer {
   private SelectionVector2 incomingSelectionVector;
   private SelectionVectorMode svMode;
 
+  private VectorAccessible incomingVec;
+
   // Load native library libNativeFilter.so
   static {
     System.load("/usr/lib64/libNativeFilter.so");
   }
 
-  private native boolean doNativeEval();
+  private native int doNativeEval(byte[] schema, int numberOfRecords, long[] inBufAddresses, long[] inBufSizes);
 
   @Override
   public void setup(FunctionContext context, VectorAccessible incoming, VectorAccessible outgoing) throws SchemaChangeException {
     this.outgoingSelectionVector = outgoing.getSelectionVector2();
     this.svMode = incoming.getSchema().getSelectionVectorMode();
+    this.incomingVec = incoming;
 
     switch(svMode){
       case NONE:
@@ -82,7 +93,7 @@ public abstract class FilterTemplateAccelerated implements Filterer {
     final int count = recordCount;
     for(int i = 0; i < count; i++){
       char index = incomingSelectionVector.getIndex(i);
-      if(doNativeEval()){
+      if(true){
         outgoingSelectionVector.setIndex(svIndex, index);
         svIndex++;
       }
@@ -92,15 +103,40 @@ public abstract class FilterTemplateAccelerated implements Filterer {
   }
 
   private int filterBatchNoSV(int recordCount){
-    int svIndex = 0;
-    for(int i = 0; i < recordCount; i++){
-      if(doNativeEval()){
-        outgoingSelectionVector.setIndex(svIndex, (char)i);
-        svIndex++;
-      }
+//    int svIndex = 0;
+//    for(int i = 0; i < recordCount; i++){
+//      if(true){
+//        outgoingSelectionVector.setIndex(svIndex, (char)i);
+//        svIndex++;
+//      }
+//    }
+//    outgoingSelectionVector.setRecordCount(svIndex);
+
+    VectorContainer in = (VectorContainer) this.incomingVec;
+
+    ArrowBuf[] tripSecondsBuffers = in.getValueAccessorById(ValueVector.class, 0).getValueVector().getBuffers(false);
+    ArrowBuf[] companyBuffers = in.getValueAccessorById(ValueVector.class, 1).getValueVector().getBuffers(false);
+    ArrowBuf[] buffers = (ArrowBuf[]) org.apache.commons.lang.ArrayUtils.addAll(tripSecondsBuffers, companyBuffers);
+
+    BatchSchema schema = in.getSchema();
+    byte[] schemaAsBytes = new byte[0];
+    try {
+      schemaAsBytes = ArrowTypeHelper.arrowSchemaToProtobuf(schema).toByteArray();
+    } catch (Exception e) {
+      e.printStackTrace();
     }
-    outgoingSelectionVector.setRecordCount(svIndex);
-    return svIndex;
+    long[] inBufAddresses = Stream.of(buffers).mapToLong(b -> b.memoryAddress()).toArray();
+    long[] inBufSizes = Stream.of(buffers).mapToLong(b -> b.readableBytes()).toArray();
+
+    ArrowBuf svBuffer = outgoingSelectionVector.getBuffer();
+    ArrowBuf[] allBuffers = (ArrowBuf[]) org.apache.commons.lang.ArrayUtils.addAll(buffers, new ArrowBuf[]{svBuffer});
+    long[] bufAddresses = (long[]) org.apache.commons.lang.ArrayUtils.addAll(inBufAddresses, new long[]{svBuffer.memoryAddress()});
+    long[] bufSizes = (long[]) org.apache.commons.lang.ArrayUtils.addAll(inBufSizes, new long[]{svBuffer.writableBytes()});
+
+    int length = doNativeEval(schemaAsBytes, recordCount, bufAddresses, bufSizes);
+
+    outgoingSelectionVector.setRecordCount(length);
+    return length;
   }
 
   public abstract void doSetup(@Named("context") FunctionContext context, @Named("incoming") VectorAccessible incoming, @Named("outgoing") VectorAccessible outgoing);
