@@ -112,12 +112,15 @@ public abstract class FilterTemplateAccelerated implements Filterer {
 //    }
 //    outgoingSelectionVector.setRecordCount(svIndex);
 
+    // Cast incoming VectorAccessible to VectorContainer for easier access to the arrow buffers
     VectorContainer in = (VectorContainer) this.incomingVec;
 
+    // Extract input buffers
     ArrowBuf[] tripSecondsBuffers = in.getValueAccessorById(ValueVector.class, 0).getValueVector().getBuffers(false);
     ArrowBuf[] companyBuffers = in.getValueAccessorById(ValueVector.class, 1).getValueVector().getBuffers(false);
     ArrowBuf[] buffers = (ArrowBuf[]) org.apache.commons.lang.ArrayUtils.addAll(tripSecondsBuffers, companyBuffers);
 
+    // Extract schema and save as byte array
     BatchSchema schema = in.getSchema();
     byte[] schemaAsBytes = new byte[0];
     try {
@@ -125,18 +128,22 @@ public abstract class FilterTemplateAccelerated implements Filterer {
     } catch (Exception e) {
       e.printStackTrace();
     }
+
+    // Compute buffer addresses and sizes for input buffers
     long[] inBufAddresses = Stream.of(buffers).mapToLong(b -> b.memoryAddress()).toArray();
     long[] inBufSizes = Stream.of(buffers).mapToLong(b -> b.readableBytes()).toArray();
 
+    // Add selectionVector buffer to buffers array
     ArrowBuf svBuffer = outgoingSelectionVector.getBuffer();
     ArrowBuf[] allBuffers = (ArrowBuf[]) org.apache.commons.lang.ArrayUtils.addAll(buffers, new ArrowBuf[]{svBuffer});
     long[] bufAddresses = (long[]) org.apache.commons.lang.ArrayUtils.addAll(inBufAddresses, new long[]{svBuffer.memoryAddress()});
     long[] bufSizes = (long[]) org.apache.commons.lang.ArrayUtils.addAll(inBufSizes, new long[]{svBuffer.writableBytes()});
 
-    int length = doNativeEval(schemaAsBytes, recordCount, bufAddresses, bufSizes);
+    // Call native function, should return number of matched records
+    int numberOfRecords = doNativeEval(schemaAsBytes, recordCount, bufAddresses, bufSizes);
 
-    outgoingSelectionVector.setRecordCount(length);
-    return length;
+    outgoingSelectionVector.setRecordCount(numberOfRecords);
+    return numberOfRecords;
   }
 
   public abstract void doSetup(@Named("context") FunctionContext context, @Named("incoming") VectorAccessible incoming, @Named("outgoing") VectorAccessible outgoing);
