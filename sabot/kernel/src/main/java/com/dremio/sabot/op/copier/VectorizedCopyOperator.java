@@ -174,7 +174,7 @@ public class VectorizedCopyOperator implements SingleInputOperator {
     final int count = incoming.getRecordCount();
 
     // copy from incoming to buffered.
-    final long addr = sv2.memoryAddress() + incomingIndex * 2;
+    final long addr = sv2.memoryAddress() + incomingIndex * 4;
     int appendCount = Integer.min(count - incomingIndex, context.getTargetBatchSize() - bufferedIndex);
     if (appendCount > 0) {
       int idx = 0;
