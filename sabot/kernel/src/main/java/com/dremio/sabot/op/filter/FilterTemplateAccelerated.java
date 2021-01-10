@@ -16,12 +16,17 @@
 package com.dremio.sabot.op.filter;
 
 import java.util.ArrayList;
+import java.util.stream.Stream;
 
 import javax.inject.Named;
+
+import org.apache.arrow.memory.ArrowBuf;
+import org.apache.arrow.vector.ValueVector;
 
 import com.dremio.exec.exception.SchemaChangeException;
 import com.dremio.exec.record.BatchSchema.SelectionVectorMode;
 import com.dremio.exec.record.VectorAccessible;
+import com.dremio.exec.record.VectorContainer;
 import com.dremio.exec.record.selection.SelectionVector2;
 import com.dremio.exec.record.selection.SelectionVector4;
 import com.dremio.sabot.exec.context.FunctionContext;
@@ -41,7 +46,7 @@ public abstract class FilterTemplateAccelerated implements Filterer {
     System.load("/usr/lib64/libNativeFilter.so");
   }
 
-  private native int doNativeEval(byte[] schema, int numberOfRecords, long[] inBufAddresses, long[] inBufSizes);
+  private native int doNativeEval(int recordCount, long[] inAddresses, long[] inSizes, long outAddress, long outSize);
 
   @Override
   public void setup(FunctionContext context, VectorAccessible incoming, VectorAccessible outgoing) throws SchemaChangeException {
@@ -98,57 +103,50 @@ public abstract class FilterTemplateAccelerated implements Filterer {
     return svIndex;
   }
 
+  // NATIVE FILTER IMPLEMENTATION
+  //
+  // Filter matching is offloaded to native code, which computes the SV4 selection vector
+  // Original java implementation:
+  //
+  //    int svIndex = 0;
+  //    for(int i = 0; i < recordCount; i++){
+  //      if(doEval(i, 0){
+  //        outgoingSelectionVector.setIndex(svIndex, i);
+  //        svIndex++;
+  //      }
+  //    }
+  //    outgoingSelectionVector.setRecordCount(svIndex);
+  //    return svIndex;
+  //
   private int filterBatchNoSV(int recordCount){
-    int svIndex = 0;
-    for(int i = 0; i < recordCount; i++){
-      if(true){
-        outgoingSelectionVector.setIndex(svIndex, i);
-        svIndex++;
-      }
-    }
-    outgoingSelectionVector.setRecordCount(svIndex);
-
-    ArrayList<Byte> byteArr = new ArrayList<Byte>();
-    for (int i = 0; i < svIndex; i++) {
-      byteArr.add(outgoingSelectionVector.getBuffer(false).getByte(i));
-    }
-
-    System.out.println(byteArr);
-
-    return svIndex;
 
     // Cast incoming VectorAccessible to VectorContainer for easier access to the arrow buffers
-//    VectorContainer in = (VectorContainer) this.incomingVec;
-//
-//    // Extract input buffers
-//    ArrowBuf[] tripSecondsBuffers = in.getValueAccessorById(ValueVector.class, 0).getValueVector().getBuffers(false);
-//    ArrowBuf[] companyBuffers = in.getValueAccessorById(ValueVector.class, 1).getValueVector().getBuffers(false);
-//    ArrowBuf[] buffers = (ArrowBuf[]) org.apache.commons.lang.ArrayUtils.addAll(tripSecondsBuffers, companyBuffers);
-//
-//    // Extract schema and save as byte array
-//    BatchSchema schema = in.getSchema();
-//    byte[] schemaAsBytes = new byte[0];
-//    try {
-//      schemaAsBytes = ArrowTypeHelper.arrowSchemaToProtobuf(schema).toByteArray();
-//    } catch (Exception e) {
-//      e.printStackTrace();
-//    }
-//
-//    // Compute buffer addresses and sizes for input buffers
-//    long[] inBufAddresses = Stream.of(buffers).mapToLong(b -> b.memoryAddress()).toArray();
-//    long[] inBufSizes = Stream.of(buffers).mapToLong(b -> b.readableBytes()).toArray();
-//
-//    // Add selectionVector buffer to buffers array
-//    ArrowBuf svBuffer = outgoingSelectionVector.getBuffer();
-//    ArrowBuf[] allBuffers = (ArrowBuf[]) org.apache.commons.lang.ArrayUtils.addAll(buffers, new ArrowBuf[]{svBuffer});
-//    long[] bufAddresses = (long[]) org.apache.commons.lang.ArrayUtils.addAll(inBufAddresses, new long[]{svBuffer.memoryAddress()});
-//    long[] bufSizes = (long[]) org.apache.commons.lang.ArrayUtils.addAll(inBufSizes, new long[]{svBuffer.writableBytes()});
-//
-//    // Call native function, should return number of matched records
-//    int numberOfRecords = doNativeEval(schemaAsBytes, recordCount, bufAddresses, bufSizes);
-//
-//    outgoingSelectionVector.setRecordCount(numberOfRecords);
-//    return numberOfRecords;
+    VectorContainer in = (VectorContainer) this.incomingVec;
+
+    // Extract input buffers and compute their addresses and sizes
+    ArrowBuf[] inBuffers = in.getValueAccessorById(ValueVector.class, 1).getValueVector().getBuffers(false);
+    long[] inAddresses = Stream.of(inBuffers).mapToLong(b -> b.memoryAddress()).toArray();
+    long[] inSizes = Stream.of(inBuffers).mapToLong(b -> b.readableBytes()).toArray();
+
+    // Extract output buffer and compute its address and size
+    ArrowBuf outBuffer = outgoingSelectionVector.getBuffer(false);
+    long outAddress = outBuffer.memoryAddress();
+    long outSize = outBuffer.writableBytes();
+
+    // Call native function, which computes the selection vector and returns the number of matched records
+    int matchedRecords = doNativeEval(recordCount, inAddresses, inSizes, outAddress, outSize);
+
+    // TODO: Remove this
+    // Print the bytes in the outBuffer for debug
+    ArrayList<Byte> byteArr = new ArrayList<Byte>();
+    for (int i = 0; i < matchedRecords; i++) {
+      byteArr.add(outgoingSelectionVector.getBuffer(false).getByte(i));
+    }
+    System.out.println(byteArr);
+
+    outgoingSelectionVector.setRecordCount(matchedRecords);
+    return matchedRecords;
+
   }
 
   public abstract void doSetup(@Named("context") FunctionContext context, @Named("incoming") VectorAccessible incoming, @Named("outgoing") VectorAccessible outgoing);

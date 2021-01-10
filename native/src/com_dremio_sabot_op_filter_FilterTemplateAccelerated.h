@@ -10,10 +10,10 @@ extern "C" {
 /*
  * Class:     com_dremio_sabot_op_filter_FilterTemplateAccelerated
  * Method:    doNativeEval
- * Signature: ([BI[J[J)I
+ * Signature: (I[J[JJJ)I
  */
 JNIEXPORT jint JNICALL Java_com_dremio_sabot_op_filter_FilterTemplateAccelerated_doNativeEval
-  (JNIEnv *, jobject, jbyteArray, jint, jlongArray, jlongArray);
+  (JNIEnv *, jobject, jint, jlongArray, jlongArray, jlong, jlong);
 
 #ifdef __cplusplus
 }
