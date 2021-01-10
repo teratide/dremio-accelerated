@@ -147,14 +147,14 @@ public abstract class FieldBufferCopier {
 
     @Override
     void seekAndCopy(long offsetAddr, int count, int seekTo) {
+      int STEP_SIZE = 4;
       final long max = offsetAddr + count * STEP_SIZE;
       final long srcAddr = source.getDataBufferAddress();
       long dstAddr = target.getDataBufferAddress() + (seekTo * SIZE);
       for (long addr = offsetAddr; addr < max; addr += STEP_SIZE, dstAddr += SIZE) {
-        PlatformDependent.putLong(
-          dstAddr,
-          PlatformDependent.getLong(
-            srcAddr + Short.toUnsignedInt(PlatformDependent.getShort(addr)) * SIZE));
+        int index = PlatformDependent.getInt(addr);
+        long val = PlatformDependent.getLong(srcAddr + index * SIZE);
+        PlatformDependent.putLong(dstAddr, val);
       }
     }
   }
@@ -194,6 +194,7 @@ public abstract class FieldBufferCopier {
     }
 
     private Cursor seekAndCopy(long sv2, int count, Cursor cursor) {
+      int STEP_SIZE = 4;
       int targetIndex;
       int targetDataIndex;
       if (cursor == null) {
@@ -217,7 +218,8 @@ public abstract class FieldBufferCopier {
 
       for(; sv2 < maxSv2; sv2 += STEP_SIZE, dstOffsetAddr += 4){
         // copy from recordIndex to last available position in target
-        final int recordIndex = Short.toUnsignedInt(PlatformDependent.getShort(sv2));
+        // final int recordIndex = Short.toUnsignedInt(PlatformDependent.getShort(sv2));
+        final int recordIndex = PlatformDependent.getInt(sv2);
         // retrieve start offset and length of value we want to copy
         final long startAndEnd = PlatformDependent.getLong(srcOffsetAddr + recordIndex * 4);
         final int firstOffset = (int) startAndEnd;
@@ -287,6 +289,7 @@ public abstract class FieldBufferCopier {
     }
 
     private void seekAndCopy(long offsetAddr, int count, int seekTo) {
+      int STEP_SIZE = 4;
       final long srcAddr;
       final long dstAddr;
       switch (bufferOrdinal) {
@@ -305,7 +308,7 @@ public abstract class FieldBufferCopier {
       final long maxAddr = offsetAddr + count * STEP_SIZE;
       int targetIndex = seekTo;
       for(; offsetAddr < maxAddr; offsetAddr += STEP_SIZE, targetIndex++){
-        final int recordIndex = Short.toUnsignedInt(PlatformDependent.getShort(offsetAddr));
+        final int recordIndex = PlatformDependent.getInt(offsetAddr);
         final int byteValue = PlatformDependent.getByte(srcAddr + (recordIndex >>> 3));
         final int bitVal = ((byteValue >>> (recordIndex & 7)) & 1) << (targetIndex & 7);
         final long addr = dstAddr + (targetIndex >>> 3);
