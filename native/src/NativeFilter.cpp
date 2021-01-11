@@ -28,20 +28,13 @@ JNIEXPORT jint JNICALL Java_com_dremio_sabot_op_filter_FilterTemplateAccelerated
     ASSERT_OK(make_record_batch_with_buf_addrs(schema, recordCount, in_buf_addrs, in_buf_sizes, recordCount, &inBatch));
     auto strings = std::static_pointer_cast<arrow::StringArray>(inBatch->column(0));
 
-    // Construct the output buffer
-    auto out_buf = arrow::Buffer::Wrap(reinterpret_cast<uint8_t *>(outAddress), (size_t) outSize);
-//    auto out_buf = std::shared_ptr<arrow::Buffer>(new arrow::Buffer(reinterpret_cast<uint8_t *>(outAddress), outSize));
-    auto out_values = reinterpret_cast<int32_t *>(out_buf->mutable_data());
+    auto out_values = reinterpret_cast<int32_t *>(outAddress);
 
     // Loop over all records and write to SV if company name matches filter
     int sv_index = 0; // Starting index of the output selection vector
     for (int i = 0; i < recordCount; i++) {
       if (strings->GetString(i) == "Dispatch Taxi Affiliation") {
-        std::cout << "HIT, writing index " << i << " to selection vector position " << sv_index << " & " << outAddress << " ..." << std::endl;
-         out_values[sv_index] = i;  // FIXME: This causes a segfault
-//        int32_t val = (int32_t) i;
-//        memcpy(out_values + sv_index * 4, &val, 4);
-        std::cout << "\t index written" << std::endl;
+         out_values[sv_index] = i;
         sv_index++; // Increment the SV index to keep track of number of matches
       }
     }

@@ -128,6 +128,7 @@ public abstract class FilterTemplateAccelerated implements Filterer {
     long[] inAddresses = Stream.of(inBuffers).mapToLong(b -> b.memoryAddress()).toArray();
     long[] inSizes = Stream.of(inBuffers).mapToLong(b -> b.readableBytes()).toArray();
 
+    // TODO: recordcount en length
     // Extract output buffer and compute its address and size
     ArrowBuf outBuffer = outgoingSelectionVector.getBuffer(false);
     long outAddress = outBuffer.memoryAddress();

@@ -18,6 +18,8 @@ package com.dremio.sabot.op.filter;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.arrow.memory.ArrowBuf;
+import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.memory.OutOfMemoryException;
 import org.apache.arrow.vector.util.TransferPair;
 
@@ -65,7 +67,13 @@ public class AcceleratedFilterOperator implements SingleInputOperator {
     this.context = context;
     this.filterOptions = new ExpressionEvaluationOptions(context.getOptions());
     this.filterOptions.setCodeGenOption(context.getOptions().getOption(ExecConstants.QUERY_EXEC_OPTION.getOptionName()).getStringVal());
-    this.output = new VectorContainerWithSV(context.getFragmentOutputAllocator(), new SelectionVector4(context.getFragmentOutputAllocator().buffer(300 * 4), 0, 300, context.getFragmentOutputAllocator()));
+
+    // Construct outputSelectionVector container with SV4 implementation
+    int targetBatchSize = context.getTargetBatchSize();
+    BufferAllocator allocator = context.getFragmentOutputAllocator(); // The same allocator which would normally be used to allocate the SV2 buffer
+    ArrowBuf svBuffer = allocator.buffer(targetBatchSize*4);  // This is only an initial size, *4 because the SV has 4 bytes per record
+    SelectionVector4 sv = new SelectionVector4(svBuffer, targetBatchSize, targetBatchSize, allocator);
+    this.output = new VectorContainerWithSV(allocator, sv);
   }
 
   @Override
