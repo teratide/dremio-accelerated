@@ -137,14 +137,6 @@ public abstract class FilterTemplateAccelerated implements Filterer {
     // Call native function, which computes the selection vector and returns the number of matched records
     int matchedRecords = doNativeEval(recordCount, inAddresses, inSizes, outAddress, outSize);
 
-    // TODO: Remove this
-    // Print the bytes in the outBuffer for debug
-    ArrayList<Byte> byteArr = new ArrayList<Byte>();
-    for (int i = 0; i < matchedRecords; i++) {
-      byteArr.add(outgoingSelectionVector.getBuffer(false).getByte(i));
-    }
-    System.out.println(byteArr);
-
     outgoingSelectionVector.setRecordCount(matchedRecords);
     return matchedRecords;
 
