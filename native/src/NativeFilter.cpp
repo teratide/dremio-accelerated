@@ -34,7 +34,7 @@ JNIEXPORT jint JNICALL Java_com_dremio_sabot_op_filter_FilterTemplateAccelerated
     int sv_index = 0; // Starting index of the output selection vector
     for (int i = 0; i < recordCount; i++) {
       if (strings->GetString(i) == "Dispatch Taxi Affiliation") {
-         out_values[sv_index] = i;
+        out_values[sv_index] = i;
         sv_index++; // Increment the SV index to keep track of number of matches
       }
     }
