@@ -26,13 +26,11 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.dremio.common.expression.LogicalExpression;
-import com.dremio.exec.physical.config.AcceleratedFilter;
 import com.dremio.exec.physical.config.Filter;
 import com.dremio.exec.proto.UserBitShared.ExpressionSplitInfo;
 import com.dremio.sabot.BaseTestOperator;
 import com.dremio.sabot.Fixtures.Table;
 import com.dremio.sabot.exec.context.OperatorStats;
-import com.dremio.sabot.op.filter.AcceleratedFilterOperator;
 import com.dremio.sabot.op.filter.FilterOperator;
 
 public class TestSimpleFilter extends BaseTestOperator {
@@ -54,26 +52,6 @@ public class TestSimpleFilter extends BaseTestOperator {
         );
 
     validateSingle(f, FilterOperator.class, input, output);
-  }
-
-  @Test
-  public void alwaysTrueFilter() throws Exception {
-    AcceleratedFilter f = new AcceleratedFilter(PROPS, null, toExpr("c0 < 10"), 1f);
-    Table input = t(
-      th("c0"),
-      tr(35),
-      tr(8),
-      tr(22)
-    );
-
-    Table output = t(
-      th("c0"),
-      tr(35),
-      tr(8),
-      tr(22)
-    );
-
-    validateSingle(f, AcceleratedFilterOperator.class, input, output);
   }
 
   @Test
