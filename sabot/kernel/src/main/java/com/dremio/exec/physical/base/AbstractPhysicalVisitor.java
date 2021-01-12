@@ -22,7 +22,6 @@ import com.dremio.exec.physical.config.DictionaryLookupPOP;
 import com.dremio.exec.physical.config.EmptyValues;
 import com.dremio.exec.physical.config.Filter;
 import com.dremio.exec.physical.config.FlattenPOP;
-import com.dremio.exec.physical.config.FletcherFilterProject;
 import com.dremio.exec.physical.config.HashAggregate;
 import com.dremio.exec.physical.config.HashJoinPOP;
 import com.dremio.exec.physical.config.HashPartitionSender;
@@ -85,11 +84,6 @@ public abstract class AbstractPhysicalVisitor<T, X, E extends Throwable> impleme
 
   @Override
   public T visitProject(Project project, X value) throws E{
-    return visitOp(project, value);
-  }
-
-  @Override
-  public T visitFletcherFilterProject(FletcherFilterProject project, X value) throws E {
     return visitOp(project, value);
   }
 

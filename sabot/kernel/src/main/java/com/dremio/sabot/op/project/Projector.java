@@ -29,10 +29,8 @@ public interface Projector {
 
   void setup(FunctionContext context, VectorAccessible incoming,  VectorAccessible outgoing, List<TransferPair> transfers, ComplexWriterCreator writerCreator)  throws SchemaChangeException;
   void projectRecords(final int recordCount);
-  List<TransferPair> getTransfers();
-  TemplateClassDefinition<Projector> TEMPLATE_DEFINITION = new TemplateClassDefinition<Projector>(Projector.class, ProjectorTemplate.class);
 
-  TemplateClassDefinition<Projector> FLETCHER_DEFINITION = new TemplateClassDefinition<Projector>(Projector.class, FletcherFilterProjectTemplate.class);
+  TemplateClassDefinition<Projector> TEMPLATE_DEFINITION = new TemplateClassDefinition<Projector>(Projector.class, ProjectorTemplate.class);
 
   public interface ComplexWriterCreator {
     public ComplexWriter addComplexWriter(String name);
