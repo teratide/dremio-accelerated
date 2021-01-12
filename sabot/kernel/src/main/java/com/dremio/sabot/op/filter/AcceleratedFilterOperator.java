@@ -45,7 +45,8 @@ import com.dremio.sabot.op.spi.SingleInputOperator;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
 
-
+// Implementation of the FilterOperator which uses the SV4 output selection vector
+// and makes use of the accelerated filter template
 public class AcceleratedFilterOperator implements SingleInputOperator {
   static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(AcceleratedFilterOperator.class);
 

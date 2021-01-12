@@ -20,12 +20,15 @@ import org.junit.Test;
 import com.dremio.BaseTestQuery;
 
 public class TestAcceleratedQuery extends BaseTestQuery {
+
+  // Query which can be evaluated in a single recordbatch
   @Test
   public void testTaxiQuery() throws Exception {
     String query = "SELECT SUM(Trip_Seconds) FROM cp.\"Taxi_Trips_300.parquet\" WHERE Company LIKE 'Blue Ribbon Taxi Association Inc.'";
     test(query);
   }
 
+  // Query which is evaluated in multiple recordbatches
   @Test
   public void testBigTaxiQuery() throws Exception {
     String query = "SELECT SUM(Trip_Seconds) FROM cp.\"Taxi_Trips_1M.parquet\" WHERE Company LIKE 'Blue Ribbon Taxi Association Inc.'";

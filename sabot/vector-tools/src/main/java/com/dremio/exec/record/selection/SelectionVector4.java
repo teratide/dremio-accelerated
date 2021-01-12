@@ -40,6 +40,7 @@ public class SelectionVector4 implements AutoCloseable {
     this.data = vector;
   }
 
+  // Overload the constructor to enable passing in a buffer allocator
   public SelectionVector4(ArrowBuf vector, int recordCount, int batchRecordCount, BufferAllocator allocator) {
     Preconditions.checkArgument(recordCount < Integer.MAX_VALUE / 4,
       "Currently, Dremio can only support allocations up to 2gb in size.  "
@@ -126,15 +127,26 @@ public class SelectionVector4 implements AutoCloseable {
     }
   }
 
-  public void allocateNew(int size) {
-    clear();
-    data = allocator.buffer(size * 4);
+  public void allocateNew(int size) throws Exception {
+
+    // Can only be used if a buffer allocator has been set
+    if (allocator != null) {
+      clear();
+      data = allocator.buffer(size * 4);
+    } else {
+      throw new Exception("No buffer allocator set");
+    }
+
   }
 
-  public void setIndex(int index, int value) {
-    data.setInt(index * 4, value);
+  // Write an index of a matching record into the selection vector
+  public void setIndex(int sv_index, int index) {
+    data.setInt(sv_index * 4, index);
   }
 
+  // Caution: this method name is made to match the same method in the SelectionVector2 implementation
+  // to enable the two implementations to be easily swapped. However, in the SV4 implementation, this
+  // method sets the length and not the recordCount.
   public void setRecordCount(int recordCount){
     this.length = recordCount;
   }

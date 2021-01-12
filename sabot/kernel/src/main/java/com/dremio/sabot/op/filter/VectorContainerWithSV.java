@@ -17,27 +17,33 @@ package com.dremio.sabot.op.filter;
 
 import org.apache.arrow.memory.BufferAllocator;
 
+import com.dremio.exec.record.BatchSchema.SelectionVectorMode;
 import com.dremio.exec.record.VectorContainer;
 import com.dremio.exec.record.selection.SelectionVector2;
 import com.dremio.exec.record.selection.SelectionVector4;
 
 /**
- * VectorContainers with sv2 (filters).
+ * VectorContainers with sv2 or sv4 (filters).
  */
 public class VectorContainerWithSV extends VectorContainer {
+
+  private final SelectionVectorMode selectionVectorMode;
+
   private final SelectionVector2 sv2;
   private final SelectionVector4 sv4;
 
   public VectorContainerWithSV(BufferAllocator allocator, SelectionVector2 sv2) {
     super(allocator);
+    this.selectionVectorMode = SelectionVectorMode.TWO_BYTE;
     this.sv2 = sv2;
-    this.sv4 = null;
+    this.sv4 = null;  // Gives nullPointerException when accidentally used
   }
 
   public VectorContainerWithSV(BufferAllocator allocator, SelectionVector4 sv4) {
     super(allocator);
+    this.selectionVectorMode = SelectionVectorMode.FOUR_BYTE;
     this.sv4 = sv4;
-    this.sv2 = null;
+    this.sv2 = null;  // Gives nullPointerException when accidentally used
   }
 
   @Override
@@ -52,7 +58,7 @@ public class VectorContainerWithSV extends VectorContainer {
 
   @Override
   public void close() {
-    if (sv2 != null) {
+    if (this.selectionVectorMode == SelectionVectorMode.TWO_BYTE) {
       sv2.clear();
     } else {
       sv4.clear();

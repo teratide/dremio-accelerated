@@ -412,10 +412,6 @@ public class VectorContainer implements Iterable<VectorWrapper<?>>, VectorAccess
     }
   }
 
-  public List<VectorWrapper<?>> getWrappers() {
-    return this.wrappers;
-  }
-
   public int setAllCount(int records){
     if(records != 0){
       for(VectorWrapper<?> w : this){

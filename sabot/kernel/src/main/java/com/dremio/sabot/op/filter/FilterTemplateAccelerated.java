@@ -30,7 +30,7 @@ import com.dremio.exec.record.selection.SelectionVector2;
 import com.dremio.exec.record.selection.SelectionVector4;
 import com.dremio.sabot.exec.context.FunctionContext;
 
-/* TODO: Remove shared code with FilterTemplate2 */
+/* Version of the filter template which offloads evaluation of the filter to FPGA */
 public abstract class FilterTemplateAccelerated implements Filterer {
   static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(FilterTemplate2.class);
 
@@ -40,11 +40,13 @@ public abstract class FilterTemplateAccelerated implements Filterer {
 
   private VectorAccessible incomingVec;
 
-  // Load native library libNativeFilter.so
+  // Load native library libNativeFilter.so, which calls the FPGA
+  // and writes back the SV4
   static {
     System.load("/usr/lib64/libNativeFilter.so");
   }
 
+  // Declare native function, headers are automatically generated using Maven
   private native int doNativeEval(int recordCount, long[] inAddresses, long[] inSizes, long outAddress, long outSize);
 
   @Override
@@ -72,7 +74,13 @@ public abstract class FilterTemplateAccelerated implements Filterer {
       return 0;
     }
 
-    outgoingSelectionVector.allocateNew(recordCount);
+    // Wrapped into a try, because the SV4 implementation is not
+    // guaranteed to have a buffer allocator
+    try {
+      outgoingSelectionVector.allocateNew(recordCount);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
 
     final int outputRecords;
     switch(svMode){
@@ -88,6 +96,7 @@ public abstract class FilterTemplateAccelerated implements Filterer {
     return outputRecords;
   }
 
+  // TODO: Offload to FPGA if the incoming schema has an SV2
   private int filterBatchSV2(int recordCount){
     int svIndex = 0;
     final int count = recordCount;
@@ -102,7 +111,7 @@ public abstract class FilterTemplateAccelerated implements Filterer {
     return svIndex;
   }
 
-  // NATIVE FILTER IMPLEMENTATION
+  // Native Filter Implementation
   //
   // Filter matching is offloaded to native code, which computes the SV4 selection vector
   // Original java implementation:
@@ -127,7 +136,6 @@ public abstract class FilterTemplateAccelerated implements Filterer {
     long[] inAddresses = Stream.of(inBuffers).mapToLong(b -> b.memoryAddress()).toArray();
     long[] inSizes = Stream.of(inBuffers).mapToLong(b -> b.readableBytes()).toArray();
 
-    // TODO: recordcount en length
     // Extract output buffer and compute its address and size
     ArrowBuf outBuffer = outgoingSelectionVector.getBuffer(false);
     long outAddress = outBuffer.memoryAddress();
