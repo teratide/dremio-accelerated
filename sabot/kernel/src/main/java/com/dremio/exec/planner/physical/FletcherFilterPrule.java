@@ -26,7 +26,10 @@ import com.dremio.exec.planner.logical.RelOptHelper;
 public class FletcherFilterPrule extends RelOptRule {
   public static final RelOptRule INSTANCE = new FletcherFilterPrule();
 
+  // Match on any filter prel
   private FletcherFilterPrule() {
+    // More specific rules could be added to match specific filter conditions
+    // in order to offload the computation to the correct Fletcher kernel
     super(RelOptHelper.any(FilterPrel.class), "FletcherFilterPrule");
   }
 
@@ -34,6 +37,8 @@ public class FletcherFilterPrule extends RelOptRule {
   public void onMatch(RelOptRuleCall call) {
     final FilterPrel  filter = (FilterPrel) call.rel(0);
 
+    // All properties of the filter operator are kept the same
+    // The only difference is in the implementation of the physical operator
     call.transformTo(new FletcherFilterPrel(filter.getCluster(), filter.getInput().getTraitSet(), filter.getInput(), filter.getCondition()));
   }
 

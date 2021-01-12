@@ -258,7 +258,9 @@ class SplitStageExecutor implements AutoCloseable {
     this.filterFunction = new JavaTimedFilter(javaFilter);
   }
 
-  // setup evaluation of accelerated filter for all splits
+  // Setup evaluation of accelerated filter for all splits
+  // This is implemented as a separate method because the java filter implementation is forced
+  // and the accelerated filter template is used
   void setupAcceleratedFilter(VectorContainer outgoing, Stopwatch javaCodeGenWatch, Stopwatch gandivaCodeGenWatch) throws GandivaException,Exception {
     if (!hasOriginalExpression) {
       setupProjector(null, javaCodeGenWatch, gandivaCodeGenWatch);
@@ -282,9 +284,10 @@ class SplitStageExecutor implements AutoCloseable {
       finalSplit = gandivaSplits.get(0);
     }
 
+    // Gandiva is not supported for the accelerated filter, only use the java implementation
     logger.trace("Setting up filter for split in Java {}", finalSplit.toString());
     javaCodeGenWatch.start();
-    final ClassGenerator<Filterer> filterClassGen = context.getClassProducer().createGenerator(Filterer.TEMPLATE_ACCELERATED).getRoot();
+    final ClassGenerator<Filterer> filterClassGen = context.getClassProducer().createGenerator(Filterer.TEMPLATE_ACCELERATED).getRoot();  // Use the accelerated filter template
     filterClassGen.addExpr(new ReturnValueExpression(finalSplit.getNamedExpression().getExpr()), ClassGenerator.BlockCreateMode.MERGE, true);
     final Filterer javaFilter = filterClassGen.getCodeGenerator().getImplementationClass();
     javaFilter.setup(context.getClassProducer().getFunctionContext(), incoming, outgoing);

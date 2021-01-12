@@ -56,6 +56,7 @@ public class FletcherFilterPrel extends FilterRelBase implements Prel {
 
     PhysicalOperator childPOP = child.getPhysicalOperator(creator);
 
+    // Accelerated Filter with 4 byte selection vector
     return new AcceleratedFilter(
       creator.props(this, null, childPOP.getProps().getSchema().clone(SelectionVectorMode.FOUR_BYTE), RESERVE, LIMIT),
       childPOP,
@@ -80,7 +81,7 @@ public class FletcherFilterPrel extends FilterRelBase implements Prel {
   }
 
   /**
-   * FilterPrel adds an SV2 (TWO_BYTE mode SelectionVector).
+   * FletcherFilterPrel adds an SV4 (FOUR_BYTE mode SelectionVector).
    */
   @Override
   public SelectionVectorMode getEncoding() {

@@ -43,7 +43,7 @@ public class VectorizedCopyOperator implements SingleInputOperator {
   private VectorAccessible incoming;
   private VectorContainer output;
   private VectorContainer buffered;
-  private SelectionVector4 sv2;
+  private SelectionVector4 sv4;
   private List<TransferPair> inToOutTransferPairs = new ArrayList<>();
   private List<TransferPair> bufferedToOutTransferPairs = new ArrayList<>();
   private boolean straightCopy;
@@ -80,7 +80,7 @@ public class VectorizedCopyOperator implements SingleInputOperator {
     this.buffered = context.createOutputVectorContainer(incoming.getSchema());
     this.buffered.buildSchema(SelectionVectorMode.NONE);
 
-    this.sv2 = straightCopy ? null : incoming.getSelectionVector4();
+    this.sv4 = straightCopy ? null : incoming.getSelectionVector4();
 
     // set up transfer pairs from incoming to output
     for (VectorWrapper<?> vv : incoming) {
@@ -174,7 +174,7 @@ public class VectorizedCopyOperator implements SingleInputOperator {
     final int count = incoming.getRecordCount();
 
     // copy from incoming to buffered.
-    final long addr = sv2.memoryAddress() + incomingIndex * 4;
+    final long addr = sv4.memoryAddress() + incomingIndex * 4;
     int appendCount = Integer.min(count - incomingIndex, context.getTargetBatchSize() - bufferedIndex);
     if (appendCount > 0) {
       int idx = 0;
