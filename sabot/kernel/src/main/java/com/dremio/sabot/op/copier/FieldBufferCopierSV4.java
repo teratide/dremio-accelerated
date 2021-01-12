@@ -33,9 +33,9 @@ import com.google.common.collect.ImmutableList;
 import io.netty.util.internal.PlatformDependent;
 
 
-public abstract class FieldBufferCopier {
+public abstract class FieldBufferCopierSV4 {
 
-  private static final int STEP_SIZE = 2;
+  private static final int STEP_SIZE = 4;
 
   private static final int NULL_BUFFER_ORDINAL = 0;
   private static final int VALUE_BUFFER_ORDINAL = 1;
@@ -131,9 +131,9 @@ public abstract class FieldBufferCopier {
       long dstAddr = target.getDataBufferAddress() + (seekTo * SIZE);
       for (long addr = offsetAddr; addr < max; addr += STEP_SIZE, dstAddr += SIZE) {
         PlatformDependent.putInt(
-            dstAddr,
-            PlatformDependent.getInt(
-                srcAddr + Short.toUnsignedInt(PlatformDependent.getShort(addr)) * SIZE));
+          dstAddr,
+          PlatformDependent.getInt(
+            srcAddr + Short.toUnsignedInt(PlatformDependent.getShort(addr)) * SIZE));
       }
     }
   }
@@ -151,10 +151,9 @@ public abstract class FieldBufferCopier {
       final long srcAddr = source.getDataBufferAddress();
       long dstAddr = target.getDataBufferAddress() + (seekTo * SIZE);
       for (long addr = offsetAddr; addr < max; addr += STEP_SIZE, dstAddr += SIZE) {
-        PlatformDependent.putLong(
-          dstAddr,
-          PlatformDependent.getLong(
-            srcAddr + Short.toUnsignedInt(PlatformDependent.getShort(addr)) * SIZE));
+        int index = PlatformDependent.getInt(addr);
+        long val = PlatformDependent.getLong(srcAddr + index * SIZE);
+        PlatformDependent.putLong(dstAddr, val);
       }
     }
   }
@@ -193,7 +192,7 @@ public abstract class FieldBufferCopier {
       this.realloc = Reallocators.getReallocator(target);
     }
 
-    private Cursor seekAndCopy(long sv2, int count, Cursor cursor) {
+    private Cursor seekAndCopy(long sv4, int count, Cursor cursor) {
       int targetIndex;
       int targetDataIndex;
       if (cursor == null) {
@@ -207,7 +206,7 @@ public abstract class FieldBufferCopier {
       // make sure vectors are internally consistent
       VariableLengthValidator.validateVariable(source, source.getValueCount());
 
-      final long maxSv2 = sv2 + count * STEP_SIZE;
+      final long maxSv4 = sv4 + count * STEP_SIZE;
       final long srcOffsetAddr = source.getOffsetBufferAddress();
       final long srcDataAddr = source.getDataBufferAddress();
 
@@ -215,9 +214,9 @@ public abstract class FieldBufferCopier {
       long curDataAddr = realloc.addr() + targetDataIndex; // start address for next copy in target
       long maxDataAddr = realloc.max(); // max bytes we can copy to target before we need to reallocate
 
-      for(; sv2 < maxSv2; sv2 += STEP_SIZE, dstOffsetAddr += 4){
+      for(; sv4 < maxSv4; sv4 += STEP_SIZE, dstOffsetAddr += 4){
         // copy from recordIndex to last available position in target
-        final int recordIndex = Short.toUnsignedInt(PlatformDependent.getShort(sv2));
+        final int recordIndex = PlatformDependent.getInt(sv4);
         // retrieve start offset and length of value we want to copy
         final long startAndEnd = PlatformDependent.getLong(srcOffsetAddr + recordIndex * 4);
         final int firstOffset = (int) startAndEnd;
@@ -244,9 +243,9 @@ public abstract class FieldBufferCopier {
     }
 
     @Override
-    public void copy(long sv2, int count) {
+    public void copy(long sv4, int count) {
       targetAlt.allocateNew(AVG_VAR_WIDTH * count, count);
-      seekAndCopy(sv2, count, null);
+      seekAndCopy(sv4, count, null);
     }
 
     @Override
@@ -255,14 +254,14 @@ public abstract class FieldBufferCopier {
     }
 
     @Override
-    public Cursor copy(long sv2, int count, Cursor cursor) {
+    public Cursor copy(long sv4, int count, Cursor cursor) {
       if (cursor == null) {
         cursor = new Cursor();
       }
       while (targetAlt.getValueCapacity() < cursor.targetIndex + count) {
         targetAlt.reAlloc();
       }
-      return seekAndCopy(sv2, count, cursor);
+      return seekAndCopy(sv4, count, cursor);
     }
 
     public void allocate(int records){
@@ -305,7 +304,7 @@ public abstract class FieldBufferCopier {
       final long maxAddr = offsetAddr + count * STEP_SIZE;
       int targetIndex = seekTo;
       for(; offsetAddr < maxAddr; offsetAddr += STEP_SIZE, targetIndex++){
-        final int recordIndex = Short.toUnsignedInt(PlatformDependent.getShort(offsetAddr));
+        final int recordIndex = PlatformDependent.getInt(offsetAddr);
         final int byteValue = PlatformDependent.getByte(srcAddr + (recordIndex >>> 3));
         final int bitVal = ((byteValue >>> (recordIndex & 7)) & 1) << (targetIndex & 7);
         final long addr = dstAddr + (targetIndex >>> 3);
@@ -436,47 +435,47 @@ public abstract class FieldBufferCopier {
     Preconditions.checkArgument(source.getClass() == target.getClass(), "Input and output vectors must be same type.");
     switch(CompleteType.fromField(source.getField()).toMinorType()){
 
-    case TIMESTAMP:
-    case FLOAT8:
-    case BIGINT:
-    case INTERVALDAY:
-    case DATE:
-      copiers.add(new EightByteCopier(source, target));
-      copiers.add(new BitCopier(source, target, NULL_BUFFER_ORDINAL, false));
-      break;
+      case TIMESTAMP:
+      case FLOAT8:
+      case BIGINT:
+      case INTERVALDAY:
+      case DATE:
+        copiers.add(new EightByteCopier(source, target));
+        copiers.add(new BitCopier(source, target, NULL_BUFFER_ORDINAL, false));
+        break;
 
-    case BIT:
-      copiers.add(new BitCopier(source, target, NULL_BUFFER_ORDINAL, true));
-      copiers.add(new BitCopier(source, target, VALUE_BUFFER_ORDINAL, false));
-      break;
+      case BIT:
+        copiers.add(new BitCopier(source, target, NULL_BUFFER_ORDINAL, true));
+        copiers.add(new BitCopier(source, target, VALUE_BUFFER_ORDINAL, false));
+        break;
 
-    case TIME:
-    case FLOAT4:
-    case INT:
-    case INTERVALYEAR:
-      copiers.add(new FourByteCopier(source, target));
-      copiers.add(new BitCopier(source, target, NULL_BUFFER_ORDINAL, false));
-      break;
+      case TIME:
+      case FLOAT4:
+      case INT:
+      case INTERVALYEAR:
+        copiers.add(new FourByteCopier(source, target));
+        copiers.add(new BitCopier(source, target, NULL_BUFFER_ORDINAL, false));
+        break;
 
-    case VARBINARY:
-    case VARCHAR:
-      copiers.add(new VariableCopier(source, target));
-      copiers.add(new BitCopier(source, target, NULL_BUFFER_ORDINAL, false));
-      break;
+      case VARBINARY:
+      case VARCHAR:
+        copiers.add(new VariableCopier(source, target));
+        copiers.add(new BitCopier(source, target, NULL_BUFFER_ORDINAL, false));
+        break;
 
-    case DECIMAL:
-      copiers.add(new SixteenByteCopier(source, target));
-      copiers.add(new BitCopier(source, target, NULL_BUFFER_ORDINAL, false));
-      break;
+      case DECIMAL:
+        copiers.add(new SixteenByteCopier(source, target));
+        copiers.add(new BitCopier(source, target, NULL_BUFFER_ORDINAL, false));
+        break;
 
-    case LIST:
-    case STRUCT:
-    case UNION:
-      copiers.add(new GenericCopier(source, target));
-      break;
+      case LIST:
+      case STRUCT:
+      case UNION:
+        copiers.add(new GenericCopier(source, target));
+        break;
 
-    default:
-      throw new UnsupportedOperationException("Unknown type to copy.");
+      default:
+        throw new UnsupportedOperationException("Unknown type to copy.");
     }
   }
 

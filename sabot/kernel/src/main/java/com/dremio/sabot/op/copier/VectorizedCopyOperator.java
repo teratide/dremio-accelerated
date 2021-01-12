@@ -33,6 +33,7 @@ import com.dremio.sabot.exec.context.MetricDef;
 import com.dremio.sabot.exec.context.OperatorContext;
 import com.dremio.sabot.op.copier.FieldBufferCopier.Cursor;
 import com.dremio.sabot.op.spi.SingleInputOperator;
+import com.google.common.base.Preconditions;
 
 public class VectorizedCopyOperator implements SingleInputOperator {
 
@@ -72,7 +73,9 @@ public class VectorizedCopyOperator implements SingleInputOperator {
   public VectorAccessible setup(VectorAccessible incoming) {
     state.is(State.NEEDS_SETUP);
 
-    // Preconditions.checkArgument(incoming.getSchema().getSelectionVectorMode() != SelectionVectorMode.FOUR_BYTE);
+    // There is only support for SV4
+    // TODO: use SV2/4 and corresponding FieldBufferCopier implementation based on SVMode of incoming schema
+    Preconditions.checkArgument(incoming.getSchema().getSelectionVectorMode() != SelectionVectorMode.TWO_BYTE);
     this.straightCopy = incoming.getSchema() == null || incoming.getSchema().getSelectionVectorMode() == SelectionVectorMode.NONE;
     this.incoming = incoming;
     this.output = context.createOutputVectorContainer(incoming.getSchema());
@@ -96,7 +99,8 @@ public class VectorizedCopyOperator implements SingleInputOperator {
     }
 
     // setup copiers from incoming to buffered.
-    copiers = FieldBufferCopier.getCopiers(VectorContainer.getFieldVectors(incoming), VectorContainer.getFieldVectors(buffered));
+    // use SV4 specific copier operation since FieldBufferCopier4 could be used in other use cases
+    copiers = FieldBufferCopierSV4.getCopiers(VectorContainer.getFieldVectors(incoming), VectorContainer.getFieldVectors(buffered));
     if (straightCopy || randomVector == null) {
       shouldBufferOutput = false;
     }
