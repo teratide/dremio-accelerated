@@ -15,7 +15,6 @@
  */
 package com.dremio.sabot.op.filter;
 
-import java.util.ArrayList;
 import java.util.stream.Stream;
 
 import javax.inject.Named;
