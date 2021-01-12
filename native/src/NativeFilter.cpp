@@ -28,16 +28,18 @@ JNIEXPORT jint JNICALL Java_com_dremio_sabot_op_filter_FilterTemplateAccelerated
     ASSERT_OK(make_record_batch_with_buf_addrs(schema, recordCount, in_buf_addrs, in_buf_sizes, recordCount, &inBatch));
     auto strings = std::static_pointer_cast<arrow::StringArray>(inBatch->column(0));
 
+    // The output SV is an array of int32's so we can access it using a simple pointer
     auto out_values = reinterpret_cast<int32_t *>(outAddress);
 
     // Loop over all records and write to SV if company name matches filter
     int sv_index = 0; // Starting index of the output selection vector
     for (int i = 0; i < recordCount; i++) {
-      if (strings->GetString(i) == "Dispatch Taxi Affiliation") {
+      if (strings->GetString(i) == "Dispatch Taxi Affiliation") {   // Hardcoded string to prove the implementation works
         out_values[sv_index] = i;
         sv_index++; // Increment the SV index to keep track of number of matches
       }
     }
 
+    // Return the number of matches
     return sv_index;
 }
