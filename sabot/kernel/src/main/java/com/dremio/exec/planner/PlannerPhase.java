@@ -362,6 +362,8 @@ public enum PlannerPhase {
     @Override
     public RuleSet getRules(OptimizerRulesContext context) {
 
+      // Additional rules which should trigger BEFORE the FPGA planning phase
+      // could be added here.
       List<RelOptRule> moreRules = new ArrayList<>();
 
       final RuleSet physicalRules = PlannerPhase.getPhysicalRules(context);
@@ -385,15 +387,16 @@ public enum PlannerPhase {
     }
   },
 
+  // New planning phase which matches parts of the plan which can be
+  // accelerated on hardware.
   FPGA("FPGA Acceleration Planning") {
     @Override
     public RuleSet getRules(OptimizerRulesContext context) {
       List<RelOptRule> ruleList = new ArrayList<>();
 
-       ruleList.add(FletcherFilterPrule.INSTANCE);
-      // ruleList.add(FletcherFilterProjectPrule.INSTANCE);
-//       ruleList.add(FletcherPrule.INSTANCE);
-//       ruleList.add(BigFletcherPrule.INSTANCE);
+      // We only add the rule for offloading filter operations to FPGA
+      // more hardware accelerator rules could be added here
+      ruleList.add(FletcherFilterPrule.INSTANCE);
 
       return RuleSets.ofList(ImmutableSet.copyOf(ruleList));
     }
