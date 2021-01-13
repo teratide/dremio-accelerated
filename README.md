@@ -1,59 +1,21 @@
 # Dremio Accelerated
 
-Integrates Fletcher into Dremio.
+*Dremio Accelerated* is an extension of Dremio's Sabot engine which enables the transparent offloading of subqueries to FPGA's. The evaluation of these subqueries is facilitated by [Fletcher](https://github.com/abs-tudelft/fletcher), which decreases the time required to design and implement the required FPGA kernels.
+
+An additional *FPGA Acceleration Planning* phase is added to the Sabot engine, which facilitates rules to target nodes in the physical plan and substitute them by a *Fletcher operator*. This operator exposes it's underlying Arrow buffers to the FPGA and specifies the location to which te results should be written. These extensions can be seen in blue in the figure below.
+
+![Sabot Extensions](graphics/Dremio_accelerated.png)
+
+This illustration is in the context of an example in which an FPGA kernel can evaluate a filter and perform both a project and stream aggregate operation. More detailed illustrations for specific usecases can be seen in the section below.
+
+## Example Usecases
+
+* [Regular expression filter](usecases/regex-filter/README.md) - evaluating a filter operation on FPGA
+  
+Planned usecases:
+* [Filter and StreamAggregate](usecases/filter-streamaggregate/README.md) - (WIP) offloading multiple operators
+* [TPC-H Query 6](usecases/tpch-query6/README.md) - (WIP) offloads hashaggregate, project, and filter operators
 
 ## Quickstart: How to build and run Dremio Accelerated
 
-### (a) Prerequisites
-
-* JDK 8 (OpenJDK or Oracle)
-* (Optional) Maven 3.3.9 or later (using Homebrew: `brew install maven`)
-
-Run the following commands to verify that you have the correct versions of Maven and JDK installed:
-
-    java -version
-    mvn --version
-
-### (b) Clone the Repository
-For now all work is done in the `c_filter` branch, this will be merged to master at a later stage.
-
-    git clone -b c_filter https://github.com/teratide/dremio-accelerated
-
-### (c) Build the Java Code
-
-    cd dremio
-    mvn clean install -DskipTests (or ./mvnw clean install -DskipTests if maven is not installed on the machine)
-
-The "-DskipTests" option skips most of the tests. Running all tests takes a long time.
-
-### (d) Build Native Code
-Compile the native code to your `java.library.path`. Example on linux:
-
-    g++ -fPIC -I"$JAVA_HOME/include" -I"$JAVA_HOME/include/linux" -shared -o /usr/lib64/libNativeFilter.so NativeFilter.cpp
-
-### (e) Run/Install
-
-#### Run
-
-    distribution/server/target/dremio-community-{DREMIO_VERSION}/dremio-community-{DREMIO_VERSION}/bin/dremio start
-
-OR to start a server with a default user (dremio/dremio123)
-
-    mvn compile exec:exec -pl dac/daemon
-
-Once run, the UI is accessible at:
-
-    http://localhost:9047
-
-#### Production Install
-
-##### (1) Unpack the tarball to install.
-
-    mkdir /opt/dremio
-    tar xvzf distribution/server/target/*.tar.gz --strip=1 -C /opt/dremio
-
-##### (2) Start Dremio Embedded Mode
-
-    cd /opt/dremio
-    bin/dremio
-
+Follow the instructions in the [installation guide](Installation.md) to get *Dremio Accelerated* up and running.
