@@ -19,6 +19,19 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 1.8
+    - name: Install Apache Arrow
+      run: |
+        wget https://apache.bintray.com/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-archive-keyring-latest-$(lsb_release --codename --short).deb
+        sudo apt-get install -y ./apache-arrow-archive-keyring-latest-$(lsb_release --codename --short).deb
+        sudo apt-get update
+        sudo apt-get install -y libarrow-dev=$ARROW_VERSION-1
+    - name: Install native_lib
+      run: |
+        mkdir -p build
+        cd build
+        cmake ../native
+        make -j
+        sudo make install
     - name: Cache Maven packages
       uses: actions/cache@v2
       with:
