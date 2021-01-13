@@ -43,7 +43,7 @@ public abstract class FilterTemplateAccelerated implements Filterer {
   // Load native library libNativeFilter.so, which calls the FPGA
   // and writes back the SV4
   static {
-    System.load("/usr/lib64/libNativeFilter.so");
+    System.load("/usr/local/lib/libnative_filter.so");
   }
 
   // Declare native function, headers are automatically generated using Maven
