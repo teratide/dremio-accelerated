@@ -42,7 +42,11 @@ jobs:
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
     - name: Build with Maven
-      run: mvn --batch-mode --update-snapshots verify
+      run: mvn --batch-mode --update-snapshots verify -Prpm
+    - uses: actions/upload-artifact@v2
+      with:
+        name: dremio-rpm
+        path: distribution/server/target/rpm/dremio-community/RPMS/noarch/*.rpm
 
   native_filter:
     name: Native filter
@@ -59,3 +63,5 @@ jobs:
       run: cmake native
     - name: Build
       run: make -j
+    - name: Install
+      run: sudo make install

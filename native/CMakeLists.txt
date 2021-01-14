@@ -108,13 +108,13 @@ set(CPACK_PACKAGE_VERSION_PATCH "${native_filter_VERSION_PATCH}")
 set(CPACK_PACKAGE_RELOCATABLE ON)
 
 set(CPACK_DEBIAN_FILE_NAME "DEB-DEFAULT")
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "openjdk-8-jdk-headless, libarrow-dev (>= 1.0.1), libarrow-dev (<< 2.0.0)")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "fletcher (>= 0.0.17), openjdk-8-jdk-headless, libarrow-dev (>= 1.0.1), libarrow-dev (<< 2.0.0)")
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "${CPACK_PACKAGE_VENDOR}")
 
 set(CPACK_RPM_FILE_NAME "RPM-DEFAULT")
 set(CPACK_RPM_PACKAGE_DESCRIPTION "${CPACK_PACKAGE_DESCRIPTION}")
 set(CPACK_RPM_PACKAGE_LICENSE "ASL 2.0")
-set(CPACK_RPM_PACKAGE_REQUIRES "java-1.8.0-openjdk-devel, arrow-devel >= 1.0.1, arrow-devel < 2.0.0")
+set(CPACK_RPM_PACKAGE_REQUIRES "fletcher >= 0.0.17, java-1.8.0-openjdk-devel, arrow-devel >= 1.0.1, arrow-devel < 2.0.0")
 
 set(CPACK_ARCHIVE_LIBRARY_FILE_NAME "${CMAKE_PROJECT_NAME}-${native_filter_VERSION}-${CMAKE_SYSTEM_NAME}")
 

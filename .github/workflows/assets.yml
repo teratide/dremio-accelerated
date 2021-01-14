@@ -9,6 +9,7 @@ on:
 env:
   CMAKE_VERSION: '3.19.2'
   ARROW_VERSION: '1.0.1'
+  FLETCHER_VERSION: '0.0.17'
 
 jobs:
   archive:
@@ -87,6 +88,7 @@ jobs:
       run: |
         yum remove -y arrow-devel
         yum autoremove -y
+        yum localinstall -y https://github.com/abs-tudelft/fletcher/releases/download/${FLETCHER_VERSION}/fletcher-${FLETCHER_VERSION}-1.el${{ matrix.version }}.x86_64.rpm
         yum localinstall -y ./${{ steps.rpm.outputs.name }}
     - name: Upload rpm
       uses: actions/upload-release-asset@v1
@@ -124,6 +126,8 @@ jobs:
     - name: Install
       run: |
         sudo apt-get --purge autoremove libarrow-dev
+        wget https://github.com/abs-tudelft/fletcher/releases/download/${FLETCHER_VERSION}/fletcher_${FLETCHER_VERSION}-ubuntu${{ matrix.version }}_amd64.deb
+        sudo apt-get install ./fletcher*.deb
         sudo apt-get install -y ./${{ steps.deb.outputs.name }} libarrow-dev=${ARROW_VERSION}-1
     - name: Upload deb
       uses: actions/upload-release-asset@v1
