@@ -35,7 +35,7 @@ jobs:
         cd build
         cmake3 ../native
         make -j
-        sudo make install
+        make install
         cd ..
         rm -rf build
     - name: Cache Maven packages
