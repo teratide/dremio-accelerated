@@ -20,6 +20,15 @@ FetchContent_Declare(cmake-modules
 )
 FetchContent_MakeAvailable(cmake-modules)
 
+FetchContent_Declare(fletcher
+  GIT_REPOSITORY  https://github.com/abs-tudelft/fletcher.git
+  GIT_TAG         0.0.17
+)
+if(NOT fletcher_POPULATED)
+  FetchContent_Populate(fletcher)
+  add_subdirectory(${fletcher_SOURCE_DIR}/runtime/cpp ${fletcher_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif()
+
 include(CompileUnits)
 
 add_compile_unit(
@@ -48,6 +57,21 @@ add_compile_unit(
   DEPS
     jni_helpers
     arrow_shared
+)
+
+add_compile_unit(
+  NAME fletcher_filter
+  TYPE SHARED
+  COMPONENT library
+  PRPS
+    CXX_STANDARD 11
+    CXX_STANDARD_REQUIRED ON
+  SRCS
+    src/FletcherFilter.cpp
+  DEPS
+    jni_helpers
+    arrow_shared
+    fletcher
 )
 
 compile_units()
