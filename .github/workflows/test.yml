@@ -42,7 +42,7 @@ jobs:
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
     - name: Build with Maven
-      run: mvn --batch-mode --update-snapshots verify -Prpm
+      run: mvn --batch-mode --update-snapshots verify -DskipTests -Prpm
     - uses: actions/upload-artifact@v2
       with:
         name: dremio-rpm
