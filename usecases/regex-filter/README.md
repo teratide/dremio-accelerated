@@ -39,6 +39,8 @@ The filter operator is where this regular expression matching takes place. This 
         digest = "REGEXP_LIKE($1, '\b[a-zA-Z]+\s[a-zA-Z]+\b')"
     }
 
+![Vanilla Dremio](vanilla-dremio.png)
+
 ## Dremio Accelerated Setup
 
 ## Results
