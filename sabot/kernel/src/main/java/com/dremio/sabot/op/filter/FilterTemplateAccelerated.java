@@ -40,10 +40,10 @@ public abstract class FilterTemplateAccelerated implements Filterer {
 
   private VectorAccessible incomingVec;
 
-  // Load native library libNativeFilter.so, which calls the FPGA
+  // Load native library, which calls the FPGA
   // and writes back the SV4
   static {
-    System.load("/usr/lib64/libNativeFilter.so");
+    System.loadLibrary("native_filter");
   }
 
   // Declare native function, headers are automatically generated using Maven
