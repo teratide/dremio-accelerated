@@ -1,4 +1,4 @@
-# Usecase: TPC-H Query 6
+# Usecase: Regular Expression Filter for Covid-19 Tweets
 
 TODO
 
