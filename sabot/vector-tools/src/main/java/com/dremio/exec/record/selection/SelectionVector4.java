@@ -16,6 +16,7 @@
 package com.dremio.exec.record.selection;
 
 import org.apache.arrow.memory.ArrowBuf;
+import org.apache.arrow.memory.BufferAllocator;
 
 import com.dremio.exec.record.DeadBuf;
 import com.google.common.base.Preconditions;
@@ -27,6 +28,7 @@ public class SelectionVector4 implements AutoCloseable {
   private int recordCount;
   private int start;
   private int length;
+  private BufferAllocator allocator = null;
 
   public SelectionVector4(ArrowBuf vector, int recordCount, int batchRecordCount) {
     Preconditions.checkArgument(recordCount < Integer.MAX_VALUE / 4,
@@ -36,6 +38,18 @@ public class SelectionVector4 implements AutoCloseable {
     this.start = 0;
     this.length = Math.min(batchRecordCount, recordCount);
     this.data = vector;
+  }
+
+  // Overload the constructor to enable passing in a buffer allocator
+  public SelectionVector4(ArrowBuf vector, int recordCount, int batchRecordCount, BufferAllocator allocator) {
+    Preconditions.checkArgument(recordCount < Integer.MAX_VALUE / 4,
+      "Currently, Dremio can only support allocations up to 2gb in size.  "
+        + "You requested an allocation of %s bytes.", recordCount * 4);
+    this.recordCount = recordCount;
+    this.start = 0;
+    this.length = Math.min(batchRecordCount, recordCount);
+    this.data = vector;
+    this.allocator = allocator;
   }
 
   public int getTotalCount() {
@@ -111,6 +125,50 @@ public class SelectionVector4 implements AutoCloseable {
       data.release();
       data = DeadBuf.DEAD_BUFFER;
     }
+  }
+
+  public void allocateNew(int size) throws Exception {
+
+    // Can only be used if a buffer allocator has been set
+    if (allocator != null) {
+      clear();
+      data = allocator.buffer(size * 4);
+    } else {
+      throw new Exception("No buffer allocator set");
+    }
+
+  }
+
+  // Write an index of a matching record into the selection vector
+  public void setIndex(int sv_index, int index) {
+    data.setInt(sv_index * 4, index);
+  }
+
+  // Caution: this method name is made to match the same method in the SelectionVector2 implementation
+  // to enable the two implementations to be easily swapped. However, in the SV4 implementation, this
+  // method sets the length and not the recordCount.
+  public void setRecordCount(int recordCount){
+    this.length = recordCount;
+  }
+
+  public long memoryAddress(){
+    return data.memoryAddress();
+  }
+
+  public ArrowBuf getBuffer(boolean clear) {
+    ArrowBuf bufferHandle = this.data;
+
+    if (clear) {
+      /* Increment the ref count for this buffer */
+      bufferHandle.retain(1);
+
+      /* We are passing ownership of the buffer to the
+       * caller. clear the buffer from within our selection vector
+       */
+      clear();
+    }
+
+    return bufferHandle;
   }
 
   @Override

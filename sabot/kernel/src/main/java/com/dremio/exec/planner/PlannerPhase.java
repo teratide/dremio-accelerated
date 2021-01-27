@@ -113,6 +113,7 @@ import com.dremio.exec.planner.physical.FilterNLJMergeRule;
 import com.dremio.exec.planner.physical.FilterProjectNLJRule;
 import com.dremio.exec.planner.physical.FilterPrule;
 import com.dremio.exec.planner.physical.FlattenPrule;
+import com.dremio.exec.planner.physical.FletcherFilterPrule;
 import com.dremio.exec.planner.physical.HashAggPrule;
 import com.dremio.exec.planner.physical.HashJoinPrule;
 import com.dremio.exec.planner.physical.LimitPrule;
@@ -360,7 +361,13 @@ public enum PlannerPhase {
   PHYSICAL("Physical Planning") {
     @Override
     public RuleSet getRules(OptimizerRulesContext context) {
-      return PlannerPhase.getPhysicalRules(context);
+
+      // Additional rules which should trigger BEFORE the FPGA planning phase
+      // could be added here.
+      List<RelOptRule> moreRules = new ArrayList<>();
+
+      final RuleSet physicalRules = PlannerPhase.getPhysicalRules(context);
+      return PlannerPhase.mergedRuleSets(physicalRules, RuleSets.ofList(moreRules));
     }
   },
 
@@ -377,6 +384,21 @@ public enum PlannerPhase {
         builder.add(SimplifyNLJConditionRule.INSTANCE);
       }
       return RuleSets.ofList(builder.build());
+    }
+  },
+
+  // New planning phase which matches parts of the plan which can be
+  // accelerated on hardware.
+  FPGA("FPGA Acceleration Planning") {
+    @Override
+    public RuleSet getRules(OptimizerRulesContext context) {
+      List<RelOptRule> ruleList = new ArrayList<>();
+
+      // We only add the rule for offloading filter operations to FPGA
+      // more hardware accelerator rules could be added here
+      ruleList.add(FletcherFilterPrule.INSTANCE);
+
+      return RuleSets.ofList(ImmutableSet.copyOf(ruleList));
     }
   };
 

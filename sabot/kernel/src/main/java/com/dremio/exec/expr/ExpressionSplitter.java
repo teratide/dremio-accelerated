@@ -303,6 +303,13 @@ public class ExpressionSplitter implements AutoCloseable {
     }
   }
 
+  // setup the pipeline for accelerated filter operations
+  private void acceleratedFilterSetup(VectorContainer outgoing, Stopwatch javaCodeGenWatch, Stopwatch gandivaCodeGenWatch) throws GandivaException, Exception {
+    for(SplitStageExecutor splitStageExecutor : execPipeline) {
+      splitStageExecutor.setupAcceleratedFilter(outgoing, javaCodeGenWatch, gandivaCodeGenWatch);
+    }
+  }
+
   public List<ExpressionSplit> getSplits() {
     return this.splitExpressions;
   }
@@ -405,6 +412,16 @@ public class ExpressionSplitter implements AutoCloseable {
     verifySplitsInGandiva();
     createPipeline();
     filterSetup(outgoing, javaCodeGenWatch, gandivaCodeGenWatch);
+  }
+
+  // create and setup the pipeline for accelerated filter operation
+  public void setupAcceleratedFilter(VectorContainer outgoing, NamedExpression namedExpression,
+                          Stopwatch javaCodeGenWatch,
+                          Stopwatch gandivaCodeGenWatch) throws Exception {
+    addToSplitter(incoming, namedExpression);
+    verifySplitsInGandiva();
+    createPipeline();
+    acceleratedFilterSetup(outgoing, javaCodeGenWatch, gandivaCodeGenWatch);
   }
 
   // This is invoked in case of an exception to release all buffers that have been allocated

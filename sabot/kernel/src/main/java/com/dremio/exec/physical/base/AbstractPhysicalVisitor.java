@@ -16,6 +16,7 @@
 package com.dremio.exec.physical.base;
 
 import com.dremio.exec.physical.config.AbstractSort;
+import com.dremio.exec.physical.config.AcceleratedFilter;
 import com.dremio.exec.physical.config.BroadcastSender;
 import com.dremio.exec.physical.config.DictionaryLookupPOP;
 import com.dremio.exec.physical.config.EmptyValues;
@@ -68,6 +69,11 @@ public abstract class AbstractPhysicalVisitor<T, X, E extends Throwable> impleme
 
   @Override
   public T visitFilter(Filter filter, X value) throws E{
+    return visitOp(filter, value);
+  }
+
+  @Override
+  public T visitAcceleratedFilter(AcceleratedFilter filter, X value) throws E{
     return visitOp(filter, value);
   }
 

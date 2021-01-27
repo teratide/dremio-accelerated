@@ -120,7 +120,7 @@ public interface ExecConstants {
       "dremio.exec.debug.return_error_for_failure_in_cancelled_fragments";
 
   PositiveLongValidator TARGET_BATCH_RECORDS_MIN = new PositiveLongValidator("exec.batch.records.min", Character.MAX_VALUE, 127);
-  PositiveLongValidator TARGET_BATCH_RECORDS_MAX = new PositiveLongValidator("exec.batch.records.max", Character.MAX_VALUE, 4095);
+  PositiveLongValidator TARGET_BATCH_RECORDS_MAX = new PositiveLongValidator("exec.batch.records.max", Character.MAX_VALUE, 64000);
   PositiveLongValidator TARGET_BATCH_SIZE_BYTES = new PositiveLongValidator("exec.batch.size-bytes", Integer.MAX_VALUE, 1024*1024);
   PositiveLongValidator BATCH_LIST_SIZE_ESTIMATE = new PositiveLongValidator("exec.batch.field.list.size-estimate", Integer.MAX_VALUE, 5);
   PositiveLongValidator BATCH_VARIABLE_FIELD_SIZE_ESTIMATE =

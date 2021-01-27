@@ -1,72 +1,22 @@
-# Dremio
+# Dremio Accelerated
 
-Dremio enables organizations to unlock the value of their data.
+*Dremio Accelerated* is an extension of Dremio's Sabot engine which enables the transparent offloading of subqueries to FPGA's. The evaluation of these subqueries is facilitated by [Fletcher](https://github.com/abs-tudelft/fletcher), which decreases the time required to design and implement the required FPGA kernels.
 
-## Documentation
+An additional *FPGA Acceleration Planning* phase is added to the Sabot engine, which facilitates rules to target nodes in the physical plan and substitute them by a *Fletcher operator*. This operator exposes it's underlying Arrow buffers to the FPGA and specifies the location to which the results should be written. These extensions can be seen in blue in the figure below.
 
-Documentation is available at https://docs.dremio.com.
+![Sabot Extensions](graphics/Dremio_accelerated.png)
 
-## Quickstart: How to build and run Dremio
+This illustration is in the context of an example in which an FPGA kernel can evaluate a filter and perform both a project and stream aggregate operation. More detailed illustrations for specific usecases can be seen in the section below.
 
-### (a) Prerequisites
+## Example Usecases
 
-* JDK 8 (OpenJDK or Oracle)
-* (Optional) Maven 3.3.9 or later (using Homebrew: `brew install maven`)
+* [Regular expression filter on taxi dataset](usecases/regex-filter/README.md) - evaluating a filter operation on FPGA
+  
+Planned usecases:
+* [Regular expression filter on covid-19 tweets](usecases/regex-tweets/README.md) - (WIP) evaluating a regex filter on a dataset with larger strings
+* [Filter and StreamAggregate](usecases/filter-streamaggregate/README.md) - (WIP) offloading multiple operators
+* [TPC-H Query 6](usecases/tpch-query6/README.md) - (WIP) offloads hashaggregate, project, and filter operators
 
-Run the following commands to verify that you have the correct versions of Maven and JDK installed:
+## Quickstart: How to build and run Dremio Accelerated
 
-    java -version
-    mvn --version
-
-### (b) Clone the Repository
-
-    git clone https://github.com/dremio/dremio-oss.git dremio
-
-### (c) Build the Code
-
-    cd dremio
-    mvn clean install -DskipTests (or ./mvnw clean install -DskipTests if maven is not installed on the machine)
-
-The "-DskipTests" option skips most of the tests. Running all tests takes a long time.
-
-### (d) Run/Install
-
-#### Run
-
-    distribution/server/target/dremio-community-{DREMIO_VERSION}/dremio-community-{DREMIO_VERSION}/bin/dremio start
-
-OR to start a server with a default user (dremio/dremio123)
-
-    mvn compile exec:exec -pl dac/daemon
-
-Once run, the UI is accessible at:
-
-    http://localhost:9047
-
-#### Production Install
-
-##### (1) Unpack the tarball to install.
-
-    mkdir /opt/dremio
-    tar xvzf distribution/server/target/*.tar.gz --strip=1 -C /opt/dremio
-
-##### (2) Start Dremio Embedded Mode
-
-    cd /opt/dremio
-    bin/dremio
-
-#### OSS Only
-
-To have the best possible experience with Dremio, we include a number of dependencies when building Dremio that are distributed under non-oss free (as in beer) licenses. 
-Examples include drivers for major databases such as Oracle Database, Microsoft SQL Server, MySQL as well as enhancements to improve source pushdowns and thread 
-scheduling. If you'd like to only include dependencies with OSS licenses, Dremio will continue to work but some features will be unavailable (such as 
-connecting to databases that rely on these drivers). 
-
-To build dremio with only OSS dependencies, you can add the following option to your Maven commandline: `-Ddremio.oss-only=true`
-
-The distribution directory will be `distribution/server/target/dremio-oss-{DREMIO_VERSION}/dremio-oss-{DREMIO_VERSION}`
-
-## Questions?
-
-If you have questions, please post them on https://community.dremio.com.
-
+Follow the instructions in the [installation guide](Installation.md) to get *Dremio Accelerated* up and running.

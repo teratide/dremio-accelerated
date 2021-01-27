@@ -186,6 +186,9 @@
                 <!-- Add some extra checkers -->
                 <arg>-Xep:PreconditionsCheckNotNullRepeated:ERROR</arg>
                 <arg>-Xep:PreconditionsInvalidPlaceholder:ERROR</arg>
+                <!-- Build JNI headers -->
+                <arg>-h</arg>
+                <arg>./native/src</arg>
               </compilerArgs>
             </configuration>
             <dependencies>
@@ -760,6 +763,8 @@ limitations under the License.
             <exclude>**/*.fbs</exclude>
             <exclude>**/*.idx</exclude>
             <exclude>**/*.tpl</exclude>
+            <exclude>**/*.cpp</exclude>
+            <exclude>**/*.h</exclude>
 
             <!-- by file name -->
             <exclude>**/Jenkinsfile</exclude>

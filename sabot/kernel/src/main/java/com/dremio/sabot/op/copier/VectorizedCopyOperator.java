@@ -28,7 +28,7 @@ import com.dremio.exec.record.BatchSchema.SelectionVectorMode;
 import com.dremio.exec.record.VectorAccessible;
 import com.dremio.exec.record.VectorContainer;
 import com.dremio.exec.record.VectorWrapper;
-import com.dremio.exec.record.selection.SelectionVector2;
+import com.dremio.exec.record.selection.SelectionVector4;
 import com.dremio.sabot.exec.context.MetricDef;
 import com.dremio.sabot.exec.context.OperatorContext;
 import com.dremio.sabot.op.copier.FieldBufferCopier.Cursor;
@@ -44,7 +44,7 @@ public class VectorizedCopyOperator implements SingleInputOperator {
   private VectorAccessible incoming;
   private VectorContainer output;
   private VectorContainer buffered;
-  private SelectionVector2 sv2;
+  private SelectionVector4 sv4;
   private List<TransferPair> inToOutTransferPairs = new ArrayList<>();
   private List<TransferPair> bufferedToOutTransferPairs = new ArrayList<>();
   private boolean straightCopy;
@@ -73,7 +73,9 @@ public class VectorizedCopyOperator implements SingleInputOperator {
   public VectorAccessible setup(VectorAccessible incoming) {
     state.is(State.NEEDS_SETUP);
 
-    Preconditions.checkArgument(incoming.getSchema().getSelectionVectorMode() != SelectionVectorMode.FOUR_BYTE);
+    // There is only support for SV4
+    // TODO: use SV2/4 and corresponding FieldBufferCopier implementation based on SVMode of incoming schema
+    Preconditions.checkArgument(incoming.getSchema().getSelectionVectorMode() != SelectionVectorMode.TWO_BYTE);
     this.straightCopy = incoming.getSchema() == null || incoming.getSchema().getSelectionVectorMode() == SelectionVectorMode.NONE;
     this.incoming = incoming;
     this.output = context.createOutputVectorContainer(incoming.getSchema());
@@ -81,7 +83,7 @@ public class VectorizedCopyOperator implements SingleInputOperator {
     this.buffered = context.createOutputVectorContainer(incoming.getSchema());
     this.buffered.buildSchema(SelectionVectorMode.NONE);
 
-    this.sv2 = straightCopy ? null : incoming.getSelectionVector2();
+    this.sv4 = straightCopy ? null : incoming.getSelectionVector4();
 
     // set up transfer pairs from incoming to output
     for (VectorWrapper<?> vv : incoming) {
@@ -97,7 +99,8 @@ public class VectorizedCopyOperator implements SingleInputOperator {
     }
 
     // setup copiers from incoming to buffered.
-    copiers = FieldBufferCopier.getCopiers(VectorContainer.getFieldVectors(incoming), VectorContainer.getFieldVectors(buffered));
+    // use SV4 specific copier operation since FieldBufferCopier4 could be used in other use cases
+    copiers = FieldBufferCopierSV4.getCopiers(VectorContainer.getFieldVectors(incoming), VectorContainer.getFieldVectors(buffered));
     if (straightCopy || randomVector == null) {
       shouldBufferOutput = false;
     }
@@ -175,7 +178,7 @@ public class VectorizedCopyOperator implements SingleInputOperator {
     final int count = incoming.getRecordCount();
 
     // copy from incoming to buffered.
-    final long addr = sv2.memoryAddress() + incomingIndex * 2;
+    final long addr = sv4.memoryAddress() + incomingIndex * 4;
     int appendCount = Integer.min(count - incomingIndex, context.getTargetBatchSize() - bufferedIndex);
     if (appendCount > 0) {
       int idx = 0;

@@ -45,10 +45,10 @@ public abstract class FieldBufferCopier {
   // Cursor into the target vector.
   public static class Cursor {
     // index in the target vector.
-    private int targetIndex;
+    int targetIndex;
 
     // index in the target data vector (used in variable width copiers).
-    private int targetDataIndex;
+    int targetDataIndex;
   }
 
   public abstract void copy(long offsetAddr, int count);

@@ -258,6 +258,43 @@ class SplitStageExecutor implements AutoCloseable {
     this.filterFunction = new JavaTimedFilter(javaFilter);
   }
 
+  // Setup evaluation of accelerated filter for all splits
+  // This is implemented as a separate method because the java filter implementation is forced
+  // and the accelerated filter template is used
+  void setupAcceleratedFilter(VectorContainer outgoing, Stopwatch javaCodeGenWatch, Stopwatch gandivaCodeGenWatch) throws GandivaException,Exception {
+    if (!hasOriginalExpression) {
+      setupProjector(null, javaCodeGenWatch, gandivaCodeGenWatch);
+      return;
+    }
+
+    // create the no-op projectors
+    setupFinish(outgoing, javaCodeGenWatch, gandivaCodeGenWatch);
+
+    // This SplitStageExecutor has the final split
+    // For a filter, we support only one expression
+    // There can be only one split in this SplitStageExecutor
+    ExpressionSplit finalSplit = null;
+    if ((javaSplits.size() + gandivaSplits.size()) != 1) {
+      throw new Exception("There should be one ExpressionSplit for a Filter operation");
+    }
+
+    if (javaSplits.size() == 1) {
+      finalSplit = javaSplits.get(0);
+    } else {
+      finalSplit = gandivaSplits.get(0);
+    }
+
+    // Gandiva is not supported for the accelerated filter, only use the java implementation
+    logger.trace("Setting up filter for split in Java {}", finalSplit.toString());
+    javaCodeGenWatch.start();
+    final ClassGenerator<Filterer> filterClassGen = context.getClassProducer().createGenerator(Filterer.TEMPLATE_ACCELERATED).getRoot();  // Use the accelerated filter template
+    filterClassGen.addExpr(new ReturnValueExpression(finalSplit.getNamedExpression().getExpr()), ClassGenerator.BlockCreateMode.MERGE, true);
+    final Filterer javaFilter = filterClassGen.getCodeGenerator().getImplementationClass();
+    javaFilter.setup(context.getClassProducer().getFunctionContext(), incoming, outgoing);
+    javaCodeGenWatch.stop();
+    this.filterFunction = new JavaTimedFilter(javaFilter);
+  }
+
   private void allocateNew(int recordsToConsume) {
     for(ValueVector vv : allocationVectors) {
       AllocationHelper.allocateNew(vv, recordsToConsume);
