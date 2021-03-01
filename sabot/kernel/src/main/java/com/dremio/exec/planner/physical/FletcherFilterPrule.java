@@ -34,7 +34,7 @@ public class FletcherFilterPrule extends RelOptRule {
   public static final RelOptRule INSTANCE = new FletcherFilterPrule();
 
   // The regular expression on which the FPGA kernel can match
-  private String regex = "'Blue.*'";
+  private String regex = "'.*Taxi.*'";
 
   // Match on any filter prel
   private FletcherFilterPrule() {
