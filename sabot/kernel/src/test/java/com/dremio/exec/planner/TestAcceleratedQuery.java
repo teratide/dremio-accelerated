@@ -23,8 +23,15 @@ public class TestAcceleratedQuery extends BaseTestQuery {
 
   // Query which can be evaluated in a single recordbatch
   @Test
+  public void testTaxiQueryRegex() throws Exception {
+    String query = "SELECT SUM(Trip_Seconds) FROM cp.\"Taxi_Trips_300.parquet\" WHERE REGEXP_LIKE(Company, 'Blue.*')";
+    test(query);
+  }
+
+  // Query which can be evaluated in a single recordbatch
+  @Test
   public void testTaxiQuery() throws Exception {
-    String query = "SELECT SUM(Trip_Seconds) FROM cp.\"Taxi_Trips_300.parquet\" WHERE REGEXP_LIKE(Company, '\\b[a-zA-Z]+\\s[a-zA-Z]+\\b')";
+    String query = "SELECT SUM(Trip_Seconds) FROM cp.\"Taxi_Trips_300.parquet\" WHERE Company LIKE 'Blue%'";
     test(query);
   }
 

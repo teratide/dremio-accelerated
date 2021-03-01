@@ -15,8 +15,15 @@
  */
 package com.dremio.exec.planner.physical;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
+import org.apache.calcite.rex.RexCall;
+import org.apache.calcite.rex.RexInputRef;
+import org.apache.calcite.rex.RexLiteral;
+import org.apache.calcite.rex.RexNode;
 
 import com.dremio.exec.planner.logical.RelOptHelper;
 
@@ -26,6 +33,9 @@ import com.dremio.exec.planner.logical.RelOptHelper;
 public class FletcherFilterPrule extends RelOptRule {
   public static final RelOptRule INSTANCE = new FletcherFilterPrule();
 
+  // The regular expression on which the FPGA kernel can match
+  private String regex = "'Blue.*'";
+
   // Match on any filter prel
   private FletcherFilterPrule() {
     // More specific rules could be added to match specific filter conditions
@@ -33,13 +43,41 @@ public class FletcherFilterPrule extends RelOptRule {
     super(RelOptHelper.any(FilterPrel.class), "FletcherFilterPrule");
   }
 
+  // Check if the filter condition is or can be written to the right regex
+  @Override
+  public boolean matches(RelOptRuleCall call) {
+    final FilterPrel filter = (FilterPrel) call.rel(0);
+    final RexCall condition = (RexCall) filter.getCondition();
+    final String inputCondition = condition.getOperands().get(1).toString();
+
+    if (inputCondition.equals(regex) || convertToRegex(inputCondition).equals(regex)) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  private String convertToRegex(String sqlCondition) {
+    String regexCondition = sqlCondition.replace("%", ".*");
+    return regexCondition;
+  }
+
+  // If this matches, convert to the fletcher filter operator
   @Override
   public void onMatch(RelOptRuleCall call) {
-    final FilterPrel  filter = (FilterPrel) call.rel(0);
+    final FilterPrel filter = (FilterPrel) call.rel(0);
 
-    // All properties of the filter operator are kept the same
-    // The only difference is in the implementation of the physical operator
-    call.transformTo(new FletcherFilterPrel(filter.getCluster(), filter.getInput().getTraitSet(), filter.getInput(), filter.getCondition()));
+    final RexCall condition = (RexCall) filter.getCondition();
+    final RexInputRef col = (RexInputRef) condition.getOperands().get(0);
+
+    final RexLiteral conditionLiteral = (RexLiteral) condition.getOperands().get(1);
+    final RexLiteral regexLiteral = RexLiteral.fromJdbcString(conditionLiteral.getType(), conditionLiteral.getTypeName(), regex);
+
+    final List<RexNode> regexOps = Arrays.asList(col, regexLiteral);
+    final RexCall regexCondition = condition.clone(condition.getType(), regexOps);
+
+    // Transform into a fletcher operator with the corresponding regex condition
+    call.transformTo(new FletcherFilterPrel(filter.getCluster(), filter.getInput().getTraitSet(), filter.getInput(), regexCondition));
   }
 
 }

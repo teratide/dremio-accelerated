@@ -1,5 +1,6 @@
 #include <jni.h>       // JNI header provided by JDK
 #include <iostream>    // C++ standard IO header
+#include <re2/re2.h>
 #include <arrow/api.h>
 #include "jni/Assertions.h"
 #include "jni/Converters.h"
@@ -31,10 +32,12 @@ JNIEXPORT jint JNICALL Java_com_dremio_sabot_op_filter_FilterTemplateAccelerated
     // The output SV is an array of int32's so we can access it using a simple pointer
     auto out_values = reinterpret_cast<int32_t *>(outAddress);
 
+    RE2 re(".*[tT][eE][rR][aA][tT][iI][dD][eE][ \t\n]+[dD][iI][vV][iI][nN][gG][ \t\n]+([sS][uU][bB])+[sS][uU][rR][fF][aA][cC][eE].*");
+
     // Loop over all records and write to SV if company name matches filter
     int sv_index = 0; // Starting index of the output selection vector
     for (int i = 0; i < recordCount; i++) {
-      if (strings->GetString(i) == "Dispatch Taxi Affiliation") {   // Hardcoded string to prove the implementation works
+      if (RE2::FullMatch(strings->GetString(i), re)) {   // Hardcoded string to prove the implementation works
         out_values[sv_index] = i;
         sv_index++; // Increment the SV index to keep track of number of matches
       }
