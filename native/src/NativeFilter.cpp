@@ -32,7 +32,7 @@ JNIEXPORT jint JNICALL Java_com_dremio_sabot_op_filter_FilterTemplateAccelerated
     // The output SV is an array of int32's so we can access it using a simple pointer
     auto out_values = reinterpret_cast<int32_t *>(outAddress);
 
-    RE2 re(".*[tT][eE][rR][aA][tT][iI][dD][eE][ \t\n]+[dD][iI][vV][iI][nN][gG][ \t\n]+([sS][uU][bB])+[sS][uU][rR][fF][aA][cC][eE].*");
+    RE2 re(".*Taxi.*");
 
     // Loop over all records and write to SV if company name matches filter
     int sv_index = 0; // Starting index of the output selection vector
