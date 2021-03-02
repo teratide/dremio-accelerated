@@ -18,7 +18,6 @@ package com.dremio.exec.planner.physical;
 import java.util.Arrays;
 import java.util.List;
 
-import com.dremio.exec.planner.types.JavaTypeFactoryImpl;
 import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.rex.RexBuilder;
@@ -28,6 +27,7 @@ import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
 
 import com.dremio.exec.planner.logical.RelOptHelper;
+import com.dremio.exec.planner.types.JavaTypeFactoryImpl;
 
 /**
  * Rule that converts a FilterPrel to a FletcherFilterPrel.
