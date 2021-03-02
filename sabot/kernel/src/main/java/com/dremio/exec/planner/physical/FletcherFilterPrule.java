@@ -18,8 +18,10 @@ package com.dremio.exec.planner.physical;
 import java.util.Arrays;
 import java.util.List;
 
+import com.dremio.exec.planner.types.JavaTypeFactoryImpl;
 import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
+import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexLiteral;
@@ -71,7 +73,8 @@ public class FletcherFilterPrule extends RelOptRule {
     final RexInputRef col = (RexInputRef) condition.getOperands().get(0);
 
     final RexLiteral conditionLiteral = (RexLiteral) condition.getOperands().get(1);
-    final RexLiteral regexLiteral = RexLiteral.fromJdbcString(conditionLiteral.getType(), conditionLiteral.getTypeName(), regex);
+    final RexBuilder builder = new RexBuilder(JavaTypeFactoryImpl.INSTANCE);
+    final RexLiteral regexLiteral = builder.makeLiteral(regex.replace("'", " "));
 
     final List<RexNode> regexOps = Arrays.asList(col, regexLiteral);
     final RexCall regexCondition = condition.clone(condition.getType(), regexOps);
