@@ -9,10 +9,10 @@ extern "C" {
 #endif
 /*
  * Class:     com_dremio_sabot_op_filter_FilterTemplateAccelerated
- * Method:    doNativeEval
+ * Method:    doTidreEval
  * Signature: (I[J[JJJ)I
  */
-JNIEXPORT jint JNICALL Java_com_dremio_sabot_op_filter_FilterTemplateAccelerated_doNativeEval
+JNIEXPORT jint JNICALL Java_com_dremio_sabot_op_filter_FilterTemplateAccelerated_doTidreEval
   (JNIEnv *, jobject, jint, jlongArray, jlongArray, jlong, jlong);
 
 #ifdef __cplusplus
