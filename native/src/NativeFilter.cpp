@@ -10,6 +10,8 @@ using namespace std;
 
 JNIEXPORT jint JNICALL Java_com_dremio_sabot_op_filter_FilterTemplateAccelerated_doNativeEval(JNIEnv *env, jobject, jint recordCount, jlongArray inAddresses, jlongArray inSizes, jlong outAddress, jlong outSize) {
 
+    std::cout << "got to native code" << std::endl;
+
     // Sanity check to see if inAddresses and inSizes have the same length
     ASSERT(env->GetArrayLength(inAddresses) == env->GetArrayLength(inSizes),
       "mismatch in array length of in buffer addresses and sizes");
