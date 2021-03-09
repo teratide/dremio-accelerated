@@ -74,6 +74,21 @@ add_compile_unit(
     fletcher
 )
 
+add_compile_unit(
+  NAME tidre_filter
+  TYPE SHARED
+  COMPONENT library
+  PRPS
+    CXX_STANDARD 11
+    CXX_STANDARD_REQUIRED ON
+  SRCS
+    src/TidreFilter.cpp
+  DEPS
+    jni_helpers
+    arrow_shared
+    fletcher
+)
+
 compile_units()
 
 execute_process (
