@@ -43,11 +43,12 @@ public abstract class FilterTemplateAccelerated implements Filterer {
   // Load native library, which calls the FPGA
   // and writes back the SV4
   static {
-    System.load("/usr/lib64/libnative_filter.so");
+    System.load("/usr/lib64/libtidre_filter.so");
   }
 
   // Declare native function, headers are automatically generated using Maven
-  private native int doNativeEval(int recordCount, long[] inAddresses, long[] inSizes, long outAddress, long outSize);
+  // private native int doNativeEval(int recordCount, long[] inAddresses, long[] inSizes, long outAddress, long outSize);
+  private native int doTidreEval(int recordCount, long[] inAddresses, long[] inSizes, long outAddress, long outSize);
 
   @Override
   public void setup(FunctionContext context, VectorAccessible incoming, VectorAccessible outgoing) throws SchemaChangeException {
@@ -142,7 +143,7 @@ public abstract class FilterTemplateAccelerated implements Filterer {
     long outSize = outBuffer.writableBytes();
 
     // Call native function, which computes the selection vector and returns the number of matched records
-    int matchedRecords = doNativeEval(recordCount, inAddresses, inSizes, outAddress, outSize);
+    int matchedRecords = doTidreEval(recordCount, inAddresses, inSizes, outAddress, outSize);
 
     outgoingSelectionVector.setRecordCount(matchedRecords);
     return matchedRecords;
