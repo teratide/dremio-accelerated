@@ -1,11 +1,15 @@
+#include <mutex>
+#include <memory>
 #include <jni.h>       // JNI header provided by JDK
 #include <iostream>    // C++ standard IO header
 #include <arrow/api.h>
+#include "tidre.h"
 #include "jni/Assertions.h"
 #include "jni/Converters.h"
 #include "com_dremio_sabot_op_filter_FilterTemplateAccelerated.h"  // Generated
 
 using namespace std;
+using Tidre = tidre::Tidre<8>;
 
 JNIEXPORT jint JNICALL Java_com_dremio_sabot_op_filter_FilterTemplateAccelerated_doNativeEval(JNIEnv *env, jobject, jint recordCount, jlongArray inAddresses, jlongArray inSizes, jlong outAddress, jlong outSize) {
 
@@ -30,16 +34,36 @@ JNIEXPORT jint JNICALL Java_com_dremio_sabot_op_filter_FilterTemplateAccelerated
 
     // The output SV is an array of int32's so we can access it using a simple pointer
     auto out_values = reinterpret_cast<int32_t *>(outAddress);
+    auto int32_offset_buffer_ptr = reinterpret_cast<int32_t *>(in_buf_addrs[2]);
+    auto char_data_buffer_ptr = reinterpret_cast<int32_t *>(in_buf_addrs[1]);
 
-    // Loop over all records and write to SV if company name matches filter
-    int sv_index = 0; // Starting index of the output selection vector
-    for (int i = 0; i < recordCount; i++) {
-      if (strings->GetString(i) == "Dispatch Taxi Affiliation") {   // Hardcoded string to prove the implementation works
-        out_values[sv_index] = i;
-        sv_index++; // Increment the SV index to keep track of number of matches
+    // Start eval using tidre
+    static std::mutex mutex;
+
+    const std::lock_guard<std::mutex> lock(mutex);
+    static std::shared_ptr<Tidre> t = nullptr;
+    if (!t) {
+      auto status = Tidre::Make(&t, "aws", 1, 8, 2, 3);
+      if (!status.ok()) {
+        t = nullptr;
+        std::cout << "Status not OK after initializing Tidre" << std::endl;
       }
+    }
+    size_t number_of_matches = 0;
+    auto status = t->RunRaw(
+      int32_offset_buffer_ptr,
+      char_data_buffer_ptr,
+      recordCount,
+      out_values,
+      recordCount*4 /* or output buffer size if smaller */,
+      &number_of_matches,
+      nullptr,
+      0
+    );
+    if (!status.ok()) {
+      std::cout << "Status not OK after running Tidre" << std::endl;
     }
 
     // Return the number of matches
-    return sv_index;
+    return (int) number_of_matches;
 }

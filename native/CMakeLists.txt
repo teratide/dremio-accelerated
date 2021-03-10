@@ -7,7 +7,7 @@ project(native_filter
   LANGUAGES CXX
 )
 
-find_package(Arrow 1.0.1 CONFIG REQUIRED)
+find_package(Arrow 3.0.0 CONFIG REQUIRED)
 find_package(JNI REQUIRED)
 add_library(jni INTERFACE IMPORTED)
 target_include_directories(jni INTERFACE "${JNI_INCLUDE_DIRS}")
@@ -22,7 +22,7 @@ FetchContent_MakeAvailable(cmake-modules)
 
 FetchContent_Declare(fletcher
   GIT_REPOSITORY  https://github.com/abs-tudelft/fletcher.git
-  GIT_TAG         0.0.17
+  GIT_TAG         0.0.19
 )
 if(NOT fletcher_POPULATED)
   FetchContent_Populate(fletcher)
