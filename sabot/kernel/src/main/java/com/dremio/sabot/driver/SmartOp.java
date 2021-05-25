@@ -43,6 +43,11 @@ import com.dremio.sabot.op.spi.ProducerOperator;
 import com.dremio.sabot.op.spi.SingleInputOperator;
 import com.dremio.sabot.op.spi.TerminalOperator;
 
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.io.FileWriter;
+import java.text.NumberFormat;
+
 import io.netty.util.internal.OutOfDirectMemoryError;
 
 /**
@@ -217,6 +222,28 @@ abstract class SmartOp<T extends Operator> implements Wrapped<T> {
 
       if(PRINT_STATS_ON_CLOSE){
         System.out.println(stats);
+      }
+
+      // Save metrics about the FILTER operators
+      if(CoreOperatorType.values()[stats.getOperatorType()] == CoreOperatorType.FILTER) {
+//        System.out.println(stats);
+
+        try (PrintWriter writer = new PrintWriter(new FileWriter("filter_re2.csv", true))) {
+
+          long recordsReceived = 0;
+          for(int i =0; i < stats.inputCount; i++){
+            recordsReceived += stats.recordsReceivedByInput[i];
+          }
+
+          StringBuilder sb = new StringBuilder();
+          sb.append(NumberFormat.getInstance().format(stats.getProcessingNanos() / 1e9));
+          sb.append(',');
+
+          writer.write(sb.toString());
+
+        } catch (FileNotFoundException e) {
+          System.out.println(e.getMessage());
+        }
       }
     }
 
@@ -550,6 +577,28 @@ abstract class SmartOp<T extends Operator> implements Wrapped<T> {
 
       if(PRINT_STATS_ON_CLOSE){
         System.out.println(stats);
+      }
+
+      // Save metrics about the PARQUET operators
+      if(CoreOperatorType.values()[stats.getOperatorType()] == CoreOperatorType.PARQUET_ROW_GROUP_SCAN) {
+//        System.out.println(stats);
+
+        try (PrintWriter writer = new PrintWriter(new FileWriter("parquet_re2.csv", true))) {
+
+          long recordsReceived = 0;
+          for(int i =0; i < stats.inputCount; i++){
+            recordsReceived += stats.recordsReceivedByInput[i];
+          }
+
+          StringBuilder sb = new StringBuilder();
+          sb.append(NumberFormat.getInstance().format(stats.getProcessingNanos() / 1e9));
+          sb.append(',');
+
+          writer.write(sb.toString());
+
+        } catch (FileNotFoundException e) {
+          System.out.println(e.getMessage());
+        }
       }
 
     }

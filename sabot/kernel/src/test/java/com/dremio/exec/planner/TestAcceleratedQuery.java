@@ -15,23 +15,93 @@
  */
 package com.dremio.exec.planner;
 
+import com.dremio.exec.proto.UserBitShared;
+import com.dremio.sabot.rpc.user.QueryDataBatch;
 import org.junit.Test;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 
 import com.dremio.BaseTestQuery;
 
+import java.util.List;
+
 public class TestAcceleratedQuery extends BaseTestQuery {
 
-  // Query which can be evaluated in a single recordbatch
-  @Test
-  public void testTaxiQuery() throws Exception {
-    String query = "SELECT SUM(Trip_Seconds) FROM cp.\"Taxi_Trips_300.parquet\" WHERE REGEXP_LIKE(Company, '\\b[a-zA-Z]+\\s[a-zA-Z]+\\b')";
-    test(query);
+  public static void main(String[] args) throws Exception {
+    try {
+      setupDefaultTestCluster();
+      testInBenchmark();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
-  // Query which is evaluated in multiple recordbatches
-  @Test
-  public void testBigTaxiQuery() throws Exception {
-    String query = "SELECT SUM(Trip_Seconds) FROM cp.\"Taxi_Trips_1M.parquet\" WHERE Company LIKE 'Blue Ribbon Taxi Association Inc.'";
-    test(query);
+  public static void testInBenchmark() throws Exception {
+
+    createCSV("filter_re2.csv");
+    createCSV("parquet_re2.csv");
+
+    int repeats = 10;
+    String[] in_sizes = {"1000", "2000", "4000", "8000", "16000", "32000", "64000", "128000", "256000", "512000", "1M", "2M", "4M"};
+
+    for (int i = 0; i < in_sizes.length; i++) {
+      System.out.println(in_sizes[i] + ": ");
+      String query = "SELECT SUM(\"value\") FROM cp.\"diving/data-" + in_sizes[i] + "-1M.parquet\" WHERE REGEXP_LIKE(\"string\", '.*[tT][eE][rR][aA][tT][iI][dD][eE][ \\t\\n]+[dD][iI][vV][iI][nN][gG][ \\t\\n]+([sS][uU][bB])+[sS][uU][rR][fF][aA][cC][eE].*')";
+      for (int r = 0; r < repeats; r++) {
+        System.out.println(String.valueOf(r));
+        writeRecordsRepeatsToCSV("filter_re2.csv", in_sizes[i], String.valueOf(r));
+        test(query);
+      }
+    }
+  }
+
+  // This overwrites old csv files
+  private static void createCSV(String filename) {
+    try (PrintWriter writer = new PrintWriter(new File(filename))) {
+
+      StringBuilder sb = new StringBuilder();
+      sb.append("records");
+      sb.append(',');
+      sb.append("repeat");
+      sb.append(',');
+      sb.append("b0");
+      sb.append(',');
+      sb.append("b1");
+      sb.append(',');
+      sb.append("b2");
+      sb.append(',');
+      sb.append("b3");
+      sb.append(',');
+      sb.append("b4");
+      sb.append(',');
+      sb.append("b5");
+
+      writer.write(sb.toString());
+
+      System.out.println("New csv file created");
+
+    } catch (FileNotFoundException e) {
+      System.out.println(e.getMessage());
+    }
+  }
+
+  private static void writeRecordsRepeatsToCSV(String filename, String records, String repeat) throws Exception {
+    try (PrintWriter writer = new PrintWriter(new FileWriter(filename, true))) {
+
+      StringBuilder sb = new StringBuilder();
+      sb.append('\n');
+      sb.append(records);
+      sb.append(',');
+      sb.append(repeat);
+      sb.append(',');
+
+      writer.write(sb.toString());
+
+    } catch (FileNotFoundException e) {
+      System.out.println(e.getMessage());
+    }
   }
 }
