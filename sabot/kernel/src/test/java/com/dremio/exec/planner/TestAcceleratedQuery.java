@@ -15,34 +15,39 @@
  */
 package com.dremio.exec.planner;
 
-import com.dremio.exec.proto.UserBitShared;
-import com.dremio.sabot.rpc.user.QueryDataBatch;
-import org.junit.Test;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.PrintWriter;
 
 import com.dremio.BaseTestQuery;
+import com.dremio.exec.ExecConstants;
 
-import java.util.List;
 
 public class TestAcceleratedQuery extends BaseTestQuery {
 
   public static void main(String[] args) throws Exception {
-    try {
-      setupDefaultTestCluster();
-      testInBenchmark();
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-  }
-
-  public static void testInBenchmark() throws Exception {
 
     createCSV("filter_re2.csv");
     createCSV("parquet_re2.csv");
+
+    try {
+      setupDefaultTestCluster();
+      testInBenchmark();
+      testBatchBenchmark();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    System.exit(0);
+  }
+
+  public static void testInBenchmark() throws Exception {
+    setSessionOption(ExecConstants.TARGET_BATCH_RECORDS_MAX, "64000");
+
+    writeBenchmarkName("filter_re2.csv", "IN BENCHMARK");
+    writeBenchmarkName("parquet_re2.csv", "IN BENCHMARK");
 
     int repeats = 10;
     String[] in_sizes = {"1000", "2000", "4000", "8000", "16000", "32000", "64000", "128000", "256000", "512000", "1M", "2M", "4M"};
@@ -53,6 +58,28 @@ public class TestAcceleratedQuery extends BaseTestQuery {
       for (int r = 0; r < repeats; r++) {
         System.out.println(String.valueOf(r));
         writeRecordsRepeatsToCSV("filter_re2.csv", in_sizes[i], String.valueOf(r));
+        writeRecordsRepeatsToCSV("parquet_re2.csv", in_sizes[i], String.valueOf(r));
+        test(query);
+      }
+    }
+  }
+
+  public static void testBatchBenchmark() throws Exception {
+
+    int repeats = 10;
+    String query = "SELECT SUM(\"value\") FROM cp.\"diving/data-4M-1M.parquet\" WHERE REGEXP_LIKE(\"string\", '.*[tT][eE][rR][aA][tT][iI][dD][eE][ \\t\\n]+[dD][iI][vV][iI][nN][gG][ \\t\\n]+([sS][uU][bB])+[sS][uU][rR][fF][aA][cC][eE].*')";
+    String[] batch_sizes = {"1000", "2000", "4000", "8000", "16000", "32000", "64000"};
+
+    writeBenchmarkName("filter_re2.csv", "BATCH BENCHMARK");
+    writeBenchmarkName("parquet_re2.csv", "BATCH BENCHMARK");
+
+    for (int i = 0; i < batch_sizes.length; i++) {
+      System.out.println(batch_sizes[i] + ": ");
+      setSessionOption(ExecConstants.TARGET_BATCH_RECORDS_MAX, batch_sizes[i]);
+      for (int r = 0; r < repeats; r++) {
+        System.out.println(String.valueOf(r));
+        writeRecordsRepeatsToCSV("filter_re2.csv", batch_sizes[i], String.valueOf(r));
+        writeRecordsRepeatsToCSV("parquet_re2.csv", batch_sizes[i], String.valueOf(r));
         test(query);
       }
     }
@@ -97,6 +124,20 @@ public class TestAcceleratedQuery extends BaseTestQuery {
       sb.append(',');
       sb.append(repeat);
       sb.append(',');
+
+      writer.write(sb.toString());
+
+    } catch (FileNotFoundException e) {
+      System.out.println(e.getMessage());
+    }
+  }
+
+  private static void writeBenchmarkName(String filename, String benchmarkName) throws Exception {
+    try (PrintWriter writer = new PrintWriter(new FileWriter(filename, true))) {
+
+      StringBuilder sb = new StringBuilder();
+      sb.append('\n');
+      sb.append(benchmarkName);
 
       writer.write(sb.toString());
 

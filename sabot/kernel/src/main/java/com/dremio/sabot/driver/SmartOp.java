@@ -18,6 +18,11 @@ package com.dremio.sabot.driver;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.text.NumberFormat;
+
 import org.apache.arrow.memory.OutOfMemoryException;
 import org.apache.arrow.vector.ValueVector;
 
@@ -42,11 +47,6 @@ import com.dremio.sabot.op.spi.Operator;
 import com.dremio.sabot.op.spi.ProducerOperator;
 import com.dremio.sabot.op.spi.SingleInputOperator;
 import com.dremio.sabot.op.spi.TerminalOperator;
-
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
-import java.io.FileWriter;
-import java.text.NumberFormat;
 
 import io.netty.util.internal.OutOfDirectMemoryError;
 
