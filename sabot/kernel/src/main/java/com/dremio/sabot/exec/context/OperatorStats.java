@@ -74,7 +74,7 @@ public class OperatorStats {
   private long[] stateNanos = new long[State.Size];
   private long[] stateMark = new long[State.Size];
 
-  private int inputCount;
+  public int inputCount;
 
   private long warnIOTimeThreshold;
 
