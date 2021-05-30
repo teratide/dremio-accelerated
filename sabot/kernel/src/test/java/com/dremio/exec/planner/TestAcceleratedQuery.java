@@ -50,11 +50,11 @@ public class TestAcceleratedQuery extends BaseTestQuery {
     writeBenchmarkName("parquet_re2.csv", "IN BENCHMARK");
 
     int repeats = 10;
-    String[] in_sizes = {"1000", "2000", "4000", "8000", "16000", "32000", "64000", "128000", "256000", "512000", "1M", "2M", "4M"};
+    String[] in_sizes = {"1000", "2000", "4000", "8000", "16000", "32000", "64000", "128000", "256000", "512000", "1000000", "2000000", "4000000"};
 
     for (int i = 0; i < in_sizes.length; i++) {
       System.out.println(in_sizes[i] + ": ");
-      String query = "SELECT SUM(\"value\") FROM cp.\"diving/data-" + in_sizes[i] + "-1M.parquet\" WHERE REGEXP_LIKE(\"string\", '.*[tT][eE][rR][aA][tT][iI][dD][eE][ \\t\\n]+[dD][iI][vV][iI][nN][gG][ \\t\\n]+([sS][uU][bB])+[sS][uU][rR][fF][aA][cC][eE].*')";
+      String query = "SELECT SUM(\"value\") FROM cp.\"diving/data-" + in_sizes[i].replace("000000", "M") + "-1M.parquet\" WHERE REGEXP_LIKE(\"string\", '.*[tT][eE][rR][aA][tT][iI][dD][eE][ \\t\\n]+[dD][iI][vV][iI][nN][gG][ \\t\\n]+([sS][uU][bB])+[sS][uU][rR][fF][aA][cC][eE].*')";
       for (int r = 0; r < repeats; r++) {
         System.out.println(String.valueOf(r));
         writeRecordsRepeatsToCSV("filter_re2.csv", in_sizes[i], String.valueOf(r));
