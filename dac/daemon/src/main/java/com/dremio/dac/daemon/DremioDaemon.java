@@ -31,6 +31,7 @@ import com.dremio.common.scanner.ClassPathScanner;
 import com.dremio.common.scanner.persistence.ScanResult;
 import com.dremio.dac.cmd.upgrade.Upgrade;
 import com.dremio.dac.server.DACConfig;
+import com.dremio.exec.planner.BenchmarkAcceleratedQuery;
 import com.dremio.exec.util.GuavaPatcher;
 import com.google.common.base.Preconditions;
 
@@ -109,6 +110,10 @@ public class DremioDaemon {
   }
 
   public static void main(String[] args) throws Exception {
+
+    // Run the benchmarks instead
+    BenchmarkAcceleratedQuery.main(null);
+
     final DACDaemonOptions options = new DACDaemonOptions();
     JCommander jc = JCommander.newBuilder().addObject(options).build();
     jc.setProgramName("Dremio");
