@@ -177,7 +177,6 @@
     <dependency>
       <groupId>org.hamcrest</groupId>
       <artifactId>hamcrest-all</artifactId>
-      <scope>test</scope>
     </dependency>
 
     <dependency>
@@ -662,6 +661,20 @@
       <artifactId>dremio-services-catalog-api</artifactId>
       <version>${project.version}</version>
     </dependency>
+      <dependency>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+      </dependency>
+    <dependency>
+      <groupId>org.testng</groupId>
+      <artifactId>testng</artifactId>
+      <version>RELEASE</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+    </dependency>
   </dependencies>
 
   <build>
@@ -919,6 +932,26 @@
                   <includes>
                     <include>multilevel/**</include>
                     <include>parquet/**</include>
+                    <include>diving/**</include>
+                  </includes>
+                  <filtering>false</filtering>
+                </resource>
+              </resources>
+              <outputDirectory>${project.build.directory}/src-resources</outputDirectory>
+            </configuration>
+          </execution>
+          <execution>
+            <id>copy-benchmark-resources</id>
+            <phase>generate-resources</phase>
+            <goals><goal>copy-resources</goal></goals>
+            <configuration>
+              <resources>
+                <resource>
+                  <directory>${project.basedir}/src/main/resources/</directory>
+                  <includes>
+                    <include>multilevel/**</include>
+                    <include>parquet/**</include>
+                    <include>diving/**</include>
                   </includes>
                   <filtering>false</filtering>
                 </resource>
