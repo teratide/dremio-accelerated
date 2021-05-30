@@ -298,7 +298,7 @@
                     Please check for unnecessary dependencies first before adjusting the limits (which should be as small as possible).
 
                   </message>
-                  <maxsize>650000000</maxsize>
+                  <maxsize>650000000000</maxsize>
                   <minsize>500000000</minsize>
                   <files>
                     <file>${project.build.directory}/${dremio.distribution.name}-${project.version}.tar.gz</file>
