@@ -41,3 +41,5 @@ jetbrains_config.js
 .cproject
 CTestTestfile.cmake
 tsconfig.json
+*.parquet
+*.csv
