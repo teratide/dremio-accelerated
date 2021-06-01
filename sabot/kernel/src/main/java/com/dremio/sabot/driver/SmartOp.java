@@ -228,7 +228,7 @@ abstract class SmartOp<T extends Operator> implements Wrapped<T> {
       if(CoreOperatorType.values()[stats.getOperatorType()] == CoreOperatorType.FILTER) {
 //        System.out.println(stats);
 
-        try (PrintWriter writer = new PrintWriter(new FileWriter("filter_vanilla.csv", true))) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter("filter_tidre.csv", true))) {
 
           long recordsReceived = 0;
           for(int i =0; i < stats.inputCount; i++){
@@ -583,7 +583,7 @@ abstract class SmartOp<T extends Operator> implements Wrapped<T> {
       if(CoreOperatorType.values()[stats.getOperatorType()] == CoreOperatorType.PARQUET_ROW_GROUP_SCAN) {
 //        System.out.println(stats);
 
-        try (PrintWriter writer = new PrintWriter(new FileWriter("parquet_vanilla.csv", true))) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter("parquet_tidre.csv", true))) {
 
           long recordsReceived = 0;
           for(int i =0; i < stats.inputCount; i++){
