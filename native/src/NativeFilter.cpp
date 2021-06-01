@@ -34,13 +34,9 @@ JNIEXPORT jint JNICALL Java_com_dremio_sabot_op_filter_FilterTemplateAccelerated
 
     // The output SV is an array of int32's so we can access it using a simple pointer
     auto out_values = reinterpret_cast<int32_t *>(outAddress);
-    auto int32_offset_buffer_ptr = reinterpret_cast<int32_t *>(in_buf_addrs[2]);
-    auto char_data_buffer_ptr = reinterpret_cast<int32_t *>(in_buf_addrs[1]);
+    auto int32_offset_buffer_ptr = reinterpret_cast<int32_t *>(in_buf_addrs[1]);
+    auto char_data_buffer_ptr = reinterpret_cast<int32_t *>(in_buf_addrs[2]);
 
-    // Start eval using tidre
-    static std::mutex mutex;
-
-    const std::lock_guard<std::mutex> lock(mutex);
     static std::shared_ptr<Tidre> t = nullptr;
     if (!t) {
       auto status = Tidre::Make(&t, "aws", 1, 8, 2, 3);
@@ -50,6 +46,7 @@ JNIEXPORT jint JNICALL Java_com_dremio_sabot_op_filter_FilterTemplateAccelerated
       }
     }
     size_t number_of_matches = 0;
+    size_t decode_errs = 0;
     auto status = t->RunRaw(
       int32_offset_buffer_ptr,
       char_data_buffer_ptr,
@@ -57,7 +54,7 @@ JNIEXPORT jint JNICALL Java_com_dremio_sabot_op_filter_FilterTemplateAccelerated
       out_values,
       recordCount*4 /* or output buffer size if smaller */,
       &number_of_matches,
-      nullptr,
+      &decode_errs,
       0
     );
     if (!status.ok()) {

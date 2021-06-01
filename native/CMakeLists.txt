@@ -57,6 +57,7 @@ add_compile_unit(
   DEPS
     jni_helpers
     arrow_shared
+    fletcher
 )
 
 add_compile_unit(
