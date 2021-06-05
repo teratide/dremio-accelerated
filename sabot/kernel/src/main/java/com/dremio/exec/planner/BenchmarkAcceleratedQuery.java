@@ -49,8 +49,8 @@ public class BenchmarkAcceleratedQuery extends BaseTestQuery {
     writeBenchmarkName("filter_tidre.csv", "IN BENCHMARK");
     writeBenchmarkName("parquet_tidre.csv", "IN BENCHMARK");
 
-    int repeats = 5;
-    String[] in_sizes = {"1000", "2000", "4000", "8000", "16000", "32000", "64000", "128000", "256000", "512000", "1000000", "2000000", "4000000"};
+    int repeats = 10;
+    String[] in_sizes = {"1000", "2000", "4000", "8000", "16000", "32000", "64000", "128000", "256000", "512000"};
 
     for (int i = 0; i < in_sizes.length; i++) {
       System.out.println(in_sizes[i] + ": ");
@@ -66,8 +66,8 @@ public class BenchmarkAcceleratedQuery extends BaseTestQuery {
 
   public static void testBatchBenchmark() throws Exception {
 
-    int repeats = 5;
-    String query = "SELECT SUM(\"value\") FROM cp.\"diving/data-4M-1M.parquet\" WHERE REGEXP_LIKE(\"string\", '.*[tT][eE][rR][aA][tT][iI][dD][eE][ \\t\\n]+[dD][iI][vV][iI][nN][gG][ \\t\\n]+([sS][uU][bB])+[sS][uU][rR][fF][aA][cC][eE].*')";
+    int repeats = 10;
+    String query = "SELECT SUM(\"value\") FROM cp.\"diving/data-32000-1M.parquet\" WHERE REGEXP_LIKE(\"string\", '.*[tT][eE][rR][aA][tT][iI][dD][eE][ \\t\\n]+[dD][iI][vV][iI][nN][gG][ \\t\\n]+([sS][uU][bB])+[sS][uU][rR][fF][aA][cC][eE].*')";
     String[] batch_sizes = {"1000", "2000", "4000", "8000", "16000", "32000", "64000"};
 
     writeBenchmarkName("filter_tidre.csv", "BATCH BENCHMARK");
